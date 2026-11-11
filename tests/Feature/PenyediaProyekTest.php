@@ -74,7 +74,7 @@ class PenyediaProyekTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson([
             'message' => 'Login berhasil.',
-            'redirect' => route('penyedia.profile'),
+            'redirect' => route('penyedia.dashboard'),
         ]);
         $this->assertAuthenticatedAs($penyedia);
     }

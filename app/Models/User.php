@@ -49,6 +49,10 @@ class User extends Authenticatable
         ];
     }
 
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_TALENTA = 'talenta_muda';
+    public const ROLE_PENYEDIA = 'penyedia_proyek';
+
     /**
      * Get the organization profile associated with the user.
      */
@@ -58,11 +62,27 @@ class User extends Authenticatable
     }
 
     /**
+     * Get projects created by this user.
+     */
+    public function projects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Project::class, 'user_id');
+    }
+
+    /**
+     * Get provider notifications for this user.
+     */
+    public function providerNotifications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProviderNotification::class, 'user_id');
+    }
+
+    /**
      * Check if user is a project provider.
      */
     public function isPenyedia(): bool
     {
-        return $this->role === 'penyedia_proyek';
+        return in_array($this->role, ['penyedia_proyek', 'penyedia', 'provider'], true);
     }
 
     /**
@@ -70,6 +90,14 @@ class User extends Authenticatable
      */
     public function isTalenta(): bool
     {
-        return $this->role === 'talenta_muda';
+        return in_array($this->role, ['talenta_muda', 'talenta'], true);
+    }
+
+    /**
+     * Check if user is an admin.
+     */
+    public function isAdmin(): bool
+    {
+        return in_array($this->role, ['admin', 'superadmin'], true);
     }
 }
