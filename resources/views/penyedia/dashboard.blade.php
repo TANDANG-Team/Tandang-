@@ -116,7 +116,13 @@
                             <div style="font-size: 14.5px; font-weight: 700; color: #111827;">{{ $project->title }}</div>
                             <div style="font-size: 12.5px; color: #6b7280; margin-top: 2px;">
                                 {{ $project->location }} &bull; <strong style="color: #2563eb;">{{ $project->applications_count }} pelamar</strong>
+                                &bull; {{ $project->accepted_applications_count }}/{{ $project->talents_needed }} diterima
                             </div>
+                            @if($project->isQuotaFilled())
+                                <span style="display: inline-block; margin-top: 6px; background: #eff6ff; color: #1d4ed8; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">
+                                    Kuota terpenuhi &middot; disembunyikan dari katalog
+                                </span>
+                            @endif
                         </div>
                         <a href="{{ route('penyedia.projects.edit', $project) }}" class="btn-secondary-action" style="padding: 6px 12px; font-size: 12.5px;">Edit</a>
                     </div>

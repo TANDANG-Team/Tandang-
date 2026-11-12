@@ -38,7 +38,7 @@ class DashboardController extends Controller
         // Active published projects
         $activeProjects = (clone $projectQuery)
             ->where('status', Project::STATUS_PUBLISHED)
-            ->withCount('applications')
+            ->withCount(['applications', 'acceptedApplications'])
             ->latest()
             ->take(5)
             ->get();

@@ -18,6 +18,23 @@ class Project extends Model
     public const STATUS_ARCHIVED = 'archived';
 
     // Legacy status values used by old system
+    /** Pilihan kategori di form Buat Proyek (penyedia tetap bisa mengetik kategori sendiri). */
+    public const CATEGORY_OPTIONS = [
+        'Administrasi',
+        'Desain Grafis',
+        'Digital Marketing',
+        'Event & Acara',
+        'Fotografi & Videografi',
+        'Konten Media Sosial',
+        'Kreatif',
+        'Kuliner',
+        'Operasional',
+        'Pendidikan & Mengajar',
+        'Penjualan & Layanan Pelanggan',
+        'Penulisan & Copywriting',
+        'Web Development',
+    ];
+
     public const STATUS_DIPUBLIKASIKAN = 'Dipublikasikan';
 
     protected $fillable = [
@@ -107,6 +124,34 @@ class Project extends Model
     public function acceptedApplications(): HasMany
     {
         return $this->hasMany(ProjectApplication::class, 'project_id')->where('status', 'diterima');
+    }
+
+    /**
+     * Proyek yang boleh dipromosikan ke talenta / publik:
+     * sudah dipublikasikan DAN kuota talenta belum terpenuhi oleh pelamar yang diterima.
+     */
+    public function scopeOpenForTalent($query)
+    {
+        return $query
+            ->whereIn('status', [self::STATUS_PUBLISHED, self::STATUS_DIPUBLIKASIKAN])
+            ->whereRaw(
+                '(select count(*) from project_applications pa where pa.project_id = projects.id and pa.status = ?)'
+                . ' < COALESCE(projects.talents_needed, projects.quota, 1)',
+                [ProjectApplication::STATUS_DITERIMA]
+            );
+    }
+
+    public function acceptedCount(): int
+    {
+        return array_key_exists('accepted_applications_count', $this->attributes)
+            ? (int) $this->accepted_applications_count
+            : $this->acceptedApplications()->count();
+    }
+
+    /** Kuota sudah terisi penuh oleh talenta yang diterima → promosi otomatis disembunyikan. */
+    public function isQuotaFilled(): bool
+    {
+        return $this->acceptedCount() >= max(1, (int) $this->talents_needed);
     }
 
     public function pendingApplications(): HasMany

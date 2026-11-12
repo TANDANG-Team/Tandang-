@@ -19,6 +19,9 @@
         .btn-pdf:hover { background: #0fa48f; color: #fff; }
         .btn-pdf.disabled { background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; cursor: not-allowed; }
     </style>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
 </head>
 <body>
     <div class="app-shell">

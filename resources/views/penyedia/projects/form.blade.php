@@ -2,6 +2,73 @@
 
 @section('title', $isEdit ? 'Edit Proyek' : 'Buat Proyek')
 
+
+@push('styles')
+<style>
+    .ws-list { display: flex; flex-direction: column; gap: 14px; }
+    .ws-row { display: grid; grid-template-columns: minmax(200px, 1fr) 2fr; gap: 14px; align-items: center; padding: 14px 16px; border: 1px solid #eef0f3; border-radius: 12px; background: #fafbfc; }
+    .ws-q { font-size: 14px; font-weight: 700; color: #1f2a37; line-height: 1.4; }
+    .ws-choices { display: grid; grid-template-columns: 1fr 0.8fr 1fr; gap: 8px; }
+    .ws-choice { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; background: #ffffff; cursor: pointer; transition: border-color .15s, background .15s; }
+    .ws-choice:hover { border-color: #99f6e4; }
+    .ws-choice input { position: absolute; opacity: 0; pointer-events: none; }
+    .ws-choice-text { font-size: 13px; font-weight: 700; color: #1f2a37; }
+    .ws-choice-hint { font-size: 11.5px; color: #6b7280; line-height: 1.35; }
+    .ws-choice.is-mid { align-items: center; justify-content: center; text-align: center; }
+    .ws-choice:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
+    .ws-choice:has(input:checked) .ws-choice-text { color: var(--primary-dark); }
+    .ws-choice:has(input:focus-visible) { outline: 3px solid #a8e1d9; outline-offset: 2px; }
+    @media (max-width: 860px) {
+        .ws-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+        .ws-choices { grid-template-columns: 1fr; }
+        .ws-choice.is-mid { align-items: flex-start; text-align: left; }
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+(function () {
+    // Kategori: tampilkan kolom ketik sendiri saat memilih "Lainnya"
+    const sel = document.getElementById('categorySelect');
+    const other = document.getElementById('categoryOther');
+    if (sel && other) {
+        const sync = () => {
+            const isOther = sel.value === '__lainnya__';
+            other.style.display = isOther ? '' : 'none';
+            other.required = isOther;
+            if (isOther && document.activeElement === sel) other.focus();
+        };
+        sel.addEventListener('change', sync);
+        sync();
+    }
+
+    // Gaya kerja: hitung jawaban & izinkan batal pilih dengan klik ulang
+    const counter = document.getElementById('wsCounter');
+    const radios = document.querySelectorAll('.ws-choice input[type=radio]');
+    const update = () => {
+        const groups = new Set([...radios].map(r => r.name));
+        const answered = [...groups].filter(n => document.querySelector(`.ws-choice input[name="${CSS.escape(n)}"]:checked`)).length;
+        counter.textContent = `${answered}/${groups.size} dijawab`;
+        counter.style.background = answered === groups.size ? '#e7f7f4' : '#f3f4f6';
+        counter.style.color = answered === groups.size ? '#0c7566' : '#4b5563';
+    };
+    radios.forEach(r => {
+        r.addEventListener('mousedown', () => { r.dataset.wasChecked = r.checked ? '1' : ''; });
+        r.closest('label').addEventListener('mousedown', () => { r.dataset.wasChecked = r.checked ? '1' : ''; });
+        r.addEventListener('click', () => {
+            if (r.dataset.wasChecked === '1') { r.checked = false; r.dataset.wasChecked = ''; }
+            update();
+        });
+        r.addEventListener('change', update);
+    });
+    update();
+})();
+</script>
+@endpush
+
 @section('content')
 <div class="page-header">
     <div class="page-title-box">
@@ -55,8 +122,30 @@
                 <label style="display: block; font-size: 13.5px; font-weight: 600; color: #374151; margin-bottom: 6px;">
                     Kategori <span style="color: #dc2626;">*</span>
                 </label>
-                <input type="text" name="category" value="{{ old('category', $project->category) }}" placeholder="Contoh: Kreatif, Desain, IT, Kuliner" required
-                       style="width: 100%; padding: 10px 14px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none;">
+                @php
+                    $categoryOptions = \App\Models\Project::CATEGORY_OPTIONS;
+                    $selectedCategory = old('category', $project->category);
+                    $categoryOther = old('category_other', '');
+                    if ($selectedCategory && $selectedCategory !== '__lainnya__' && !in_array($selectedCategory, $categoryOptions, true)) {
+                        // Kategori lama yang tidak ada di daftar → tampilkan di kolom "Masukkan Kategori"
+                        $categoryOther = $selectedCategory;
+                        $selectedCategory = '__lainnya__';
+                    }
+                @endphp
+                <select name="category" id="categorySelect" required
+                        style="width: 100%; padding: 10px 14px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; background: #ffffff;">
+                    <option value="" disabled {{ $selectedCategory ? '' : 'selected' }}>Pilih kategori proyek</option>
+                    @foreach($categoryOptions as $opt)
+                        <option value="{{ $opt }}" {{ $selectedCategory === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                    @endforeach
+                    <option value="__lainnya__" {{ $selectedCategory === '__lainnya__' ? 'selected' : '' }}>Lainnya (Masukkan Kategori)…</option>
+                </select>
+                <input type="text" name="category_other" id="categoryOther" value="{{ $categoryOther }}" maxlength="100"
+                       placeholder="Ketik kategori, contoh: Kerajinan Tangan"
+                       style="width: 100%; margin-top: 8px; padding: 10px 14px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; {{ $selectedCategory === '__lainnya__' ? '' : 'display: none;' }}">
+                @error('category')
+                    <p style="margin: 6px 0 0; font-size: 12.5px; color: #dc2626;">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -166,53 +255,88 @@
     </div>
 
     <!-- BAGIAN 3: KARAKTERISTIK GAYA KERJA (8 DIMENSI) -->
+    @php
+        // Nilai (left/right) harus sama dengan WorkstyleMatchingService::CHARACTERISTIC_MAP
+        $dimensions = [
+            'independence_teamwork' => [
+                'q' => 'Talenta akan lebih banyak bekerja…',
+                'left' => 'Mandiri', 'left_text' => 'Sendiri', 'left_hint' => 'mengerjakan tugasnya sendiri',
+                'right' => 'Kerja tim', 'right_text' => 'Bersama tim', 'right_hint' => 'bekerja bareng tim/rekan',
+            ],
+            'structure_flexibility' => [
+                'q' => 'Bagaimana cara kerjanya diatur?',
+                'left' => 'Terstruktur', 'left_text' => 'Ikuti arahan', 'left_hint' => 'ada langkah/SOP yang jelas',
+                'right' => 'Fleksibel', 'right_text' => 'Bebas berkreasi', 'right_hint' => 'talenta menentukan caranya',
+            ],
+            'written_verbal' => [
+                'q' => 'Komunikasi dengan Anda lebih sering lewat…',
+                'left' => 'Tertulis', 'left_text' => 'Chat / pesan', 'left_hint' => 'WhatsApp, email, dokumen',
+                'right' => 'Langsung', 'right_text' => 'Ngobrol langsung', 'right_hint' => 'tatap muka atau telepon',
+            ],
+            'remote_field' => [
+                'q' => 'Di mana pekerjaan dilakukan?',
+                'left' => 'Remote', 'left_text' => 'Online / dari rumah', 'left_hint' => 'cukup pakai laptop/HP',
+                'right' => 'Lapangan', 'right_text' => 'Di lokasi', 'right_hint' => 'datang ke tempat usaha/acara',
+            ],
+            'analytical_practical' => [
+                'q' => 'Tugasnya lebih banyak berupa…',
+                'left' => 'Analitis', 'left_text' => 'Olah data / dokumen', 'left_hint' => 'teliti, di depan layar',
+                'right' => 'Praktis', 'right_text' => 'Kerja aktif', 'right_hint' => 'aksi langsung, banyak bergerak',
+            ],
+            'stable_dynamic' => [
+                'q' => 'Ritme kerjanya seperti apa?',
+                'left' => 'Stabil', 'left_text' => 'Tenang & rutin', 'left_hint' => 'tugas mirip setiap hari',
+                'right' => 'Dinamis', 'right_text' => 'Cepat & berubah-ubah', 'right_hint' => 'sering ada hal mendadak',
+            ],
+            'limited_intense_interaction' => [
+                'q' => 'Seberapa sering talenta bertemu orang baru?',
+                'left' => 'Interaksi terbatas', 'left_text' => 'Jarang', 'left_hint' => 'fokus pada pekerjaan sendiri',
+                'right' => 'Interaksi intens', 'right_text' => 'Sering', 'right_hint' => 'melayani pelanggan/pengunjung',
+            ],
+            'detailed_spontaneous_planning' => [
+                'q' => 'Rencana kerjanya…',
+                'left' => 'Rencana rinci', 'left_text' => 'Sudah dijadwalkan', 'left_hint' => 'jadwal & target jelas',
+                'right' => 'Spontan', 'right_text' => 'Menyesuaikan situasi', 'right_hint' => 'diatur sambil jalan',
+            ],
+        ];
+        $savedCharacteristics = $project->workstyle_characteristics ?? [];
+    @endphp
+
     <div style="background: #ffffff; border: 1px solid #e9edf2; border-radius: 14px; padding: 28px; margin-bottom: 28px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f3f4f6;">
-            <div style="width: 28px; height: 28px; border-radius: 50%; background: #0fa48f; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">3</div>
-            <div>
-                <h2 style="font-size: 17px; font-weight: 700; color: #111827; margin: 0 0 2px;">Karakteristik Gaya Kerja</h2>
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: #0fa48f; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0;">3</div>
+            <div style="flex: 1;">
+                <h2 style="font-size: 17px; font-weight: 700; color: #111827; margin: 0 0 2px;">Suasana Kerja Proyek <span style="font-size: 12.5px; font-weight: 600; color: #9ca3af;">(opsional)</span></h2>
                 <p style="margin: 0; font-size: 13px; color: #6b7280;">
-                    Pilihan ini membantu TANDANG merekomendasikan proyek kepada talenta dengan preferensi yang serupa. Kosongkan dimensi yang belum ingin ditentukan.
+                    Jawab singkat seperti apa pekerjaannya nanti. TANDANG memakai jawaban ini untuk mencocokkan proyek dengan talenta yang gaya kerjanya sesuai.
                 </p>
             </div>
+            <span id="wsCounter" style="flex-shrink: 0; background: #f3f4f6; color: #4b5563; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px;">0/8 dijawab</span>
         </div>
 
-        @php
-            $dimensions = [
-                'independence_teamwork' => ['left' => 'Mandiri', 'right' => 'Kerja tim'],
-                'structure_flexibility' => ['left' => 'Terstruktur', 'right' => 'Fleksibel'],
-                'written_verbal' => ['left' => 'Tertulis', 'right' => 'Langsung'],
-                'remote_field' => ['left' => 'Remote', 'right' => 'Lapangan'],
-                'analytical_practical' => ['left' => 'Analitis', 'right' => 'Praktis'],
-                'stable_dynamic' => ['left' => 'Stabil', 'right' => 'Dinamis'],
-                'limited_intense_interaction' => ['left' => 'Interaksi terbatas', 'right' => 'Interaksi intens'],
-                'detailed_spontaneous_planning' => ['left' => 'Rencana rinci', 'right' => 'Spontan'],
-            ];
-            $savedCharacteristics = $project->workstyle_characteristics ?? [];
-        @endphp
+        <div style="background: #f0fdfa; border: 1px solid #ccfbf1; color: #0f766e; font-size: 12.5px; border-radius: 10px; padding: 10px 14px; margin-bottom: 18px;">
+            Tidak yakin? Pilih <strong>Keduanya</strong>, atau lewati saja. Klik pilihan yang sama sekali lagi untuk membatalkannya.
+        </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="ws-list">
             @foreach($dimensions as $key => $dim)
-                @php
-                    $currentVal = old("workstyle_characteristics.{$key}", $savedCharacteristics[$key] ?? '');
-                @endphp
-                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px;">
-                    <div style="font-size: 13.5px; font-weight: 700; color: #1f2a37; margin-bottom: 8px;">
-                        {{ $dim['left'] }} &mdash; {{ $dim['right'] }}
+                @php $currentVal = old("workstyle_characteristics.{$key}", $savedCharacteristics[$key] ?? ''); @endphp
+                <div class="ws-row">
+                    <div class="ws-q">{{ $loop->iteration }}. {{ $dim['q'] }}</div>
+                    <div class="ws-choices" role="radiogroup" aria-label="{{ $dim['q'] }}">
+                        @foreach([
+                            ['value' => $dim['left'], 'text' => $dim['left_text'], 'hint' => $dim['left_hint']],
+                            ['value' => 'Keduanya', 'text' => 'Keduanya', 'hint' => 'campuran / tidak tentu'],
+                            ['value' => $dim['right'], 'text' => $dim['right_text'], 'hint' => $dim['right_hint']],
+                        ] as $choice)
+                            <label class="ws-choice {{ $choice['value'] === 'Keduanya' ? 'is-mid' : '' }}">
+                                <input type="radio" name="workstyle_characteristics[{{ $key }}]" value="{{ $choice['value'] }}"
+                                       {{ $currentVal === $choice['value'] ? 'checked' : '' }}>
+                                <span class="ws-choice-text">{{ $choice['text'] }}</span>
+                                <span class="ws-choice-hint">{{ $choice['hint'] }}</span>
+                            </label>
+                        @endforeach
                     </div>
-                    <select name="workstyle_characteristics[{{ $key }}]"
-                            style="width: 100%; padding: 8px 12px; border: 1.5px solid #d1d5db; border-radius: 6px; font-size: 13px; background: #ffffff; outline: none;">
-                        <option value="">Belum ditentukan</option>
-                        <option value="{{ $dim['left'] }}" {{ $currentVal === $dim['left'] ? 'selected' : '' }}>
-                            {{ $dim['left'] }}
-                        </option>
-                        <option value="Keduanya" {{ $currentVal === 'Keduanya' ? 'selected' : '' }}>
-                            Keduanya / Seimbang
-                        </option>
-                        <option value="{{ $dim['right'] }}" {{ $currentVal === $dim['right'] ? 'selected' : '' }}>
-                            {{ $dim['right'] }}
-                        </option>
-                    </select>
                 </div>
             @endforeach
         </div>

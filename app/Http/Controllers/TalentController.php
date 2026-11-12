@@ -35,7 +35,7 @@ class TalentController extends Controller
         $user = Auth::user();
         $talent = $this->getOrCreateTalentProfile($user);
 
-        $projects = Project::whereIn('status', [Project::STATUS_PUBLISHED, 'Dipublikasikan'])
+        $projects = Project::openForTalent()
             ->orderBy('id', 'asc')
             ->get();
 
@@ -75,7 +75,7 @@ class TalentController extends Controller
         $user = Auth::user();
         $talent = $this->getOrCreateTalentProfile($user);
 
-        $projects = Project::whereIn('status', [Project::STATUS_PUBLISHED, 'Dipublikasikan'])
+        $projects = Project::openForTalent()
             ->orderBy('id', 'asc')
             ->get();
 
@@ -106,7 +106,7 @@ class TalentController extends Controller
         $user = Auth::user();
         $talent = $this->getOrCreateTalentProfile($user);
 
-        $query = Project::whereIn('status', [Project::STATUS_PUBLISHED, 'Dipublikasikan']);
+        $query = Project::openForTalent();
 
         if ($request->filled('q')) {
             $q = $request->q;
@@ -172,6 +172,13 @@ class TalentController extends Controller
         }
 
         $project = Project::findOrFail($id);
+
+        if (! Project::openForTalent()->whereKey($project->id)->exists()) {
+            return redirect()->back()->with(
+                'warning',
+                'Maaf, proyek ini sudah tidak menerima lamaran karena kuota talenta sudah terpenuhi atau proyek telah ditutup.'
+            );
+        }
 
         $existing = Application::where('user_id', $user->id)->where('project_id', $project->id)->first();
         if ($existing) {

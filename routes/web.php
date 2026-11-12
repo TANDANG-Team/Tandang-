@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 // ================= Landing Page =================
 Route::get('/', function () {
-    $projects = Project::whereIn('status', [Project::STATUS_PUBLISHED, 'Dipublikasikan'])
+    $projects = Project::openForTalent()
         ->orderBy('id', 'asc')
         ->take(6)
         ->get();

@@ -45,7 +45,7 @@ class ProjectController extends Controller
             });
         }
 
-        $projects = $projectsQuery->withCount('applications')->latest()->paginate(10)->withQueryString();
+        $projects = $projectsQuery->withCount(['applications', 'acceptedApplications'])->latest()->paginate(10)->withQueryString();
 
         return view('penyedia.projects.index', [
             'user' => $user,
@@ -200,6 +200,19 @@ class ProjectController extends Controller
      */
     protected function validateProject(Request $request): array
     {
+        // Kategori "Lainnya": pakai teks yang diketik penyedia
+        if ($request->input('category') === '__lainnya__') {
+            $request->merge(['category' => trim((string) $request->input('category_other', ''))]);
+        }
+
+        // Radio yang tidak dipilih tidak terkirim; pastikan kosong = tidak ditentukan (bukan nilai lama)
+        $request->merge([
+            'workstyle_characteristics' => array_filter(
+                (array) $request->input('workstyle_characteristics', []),
+                fn ($v) => $v !== null && $v !== ''
+            ),
+        ]);
+
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', 'max:100'],
@@ -218,7 +231,7 @@ class ProjectController extends Controller
             'workstyle_characteristics.*' => ['nullable', 'string', 'max:50'],
         ], [
             'title.required' => 'Judul proyek wajib diisi.',
-            'category.required' => 'Kategori proyek wajib dipilih/diisi.',
+            'category.required' => 'Kategori proyek wajib dipilih. Jika memilih "Lainnya", ketik nama kategorinya.',
             'location.required' => 'Lokasi proyek wajib diisi.',
             'work_method.required' => 'Metode kerja wajib dipilih.',
             'availability.required' => 'Ketersediaan / jadwal wajib diisi.',

@@ -101,6 +101,13 @@
                                 <span class="badge-status badge-{{ $project->status }}">
                                     {{ $project->status_label }}
                                 </span>
+                                @if(in_array($project->status, ['published', 'Dipublikasikan'], true) && $project->isQuotaFilled())
+                                    <div style="margin-top: 6px;">
+                                        <span title="Semua kuota talenta sudah terisi, sehingga proyek otomatis tidak ditampilkan lagi di katalog talenta." style="display: inline-block; background: #eff6ff; color: #1d4ed8; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">
+                                            Kuota terpenuhi &middot; disembunyikan dari katalog
+                                        </span>
+                                    </div>
+                                @endif
                             </td>
                             <td style="padding: 16px 18px; color: #6b7280; font-size: 12.5px;">
                                 {{ $project->updated_at->format('d/m/Y') }}

@@ -125,6 +125,10 @@ class ApplicantController extends Controller
         $alertType = $validated['status'] === 'diterima' ? 'success' : 'info';
         $message = "Status pelamar {$applicantName} berhasil diubah menjadi {$application->status_label}.";
 
+        if ($validated['status'] === ProjectApplication::STATUS_DITERIMA && $project->fresh()->isQuotaFilled()) {
+            $message .= " Kuota proyek \"{$project->title}\" kini terpenuhi, sehingga proyek otomatis tidak ditampilkan lagi di katalog talenta.";
+        }
+
         return redirect()->back()->with($alertType, $message);
     }
 }

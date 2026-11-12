@@ -25,6 +25,26 @@ class ProjectApplication extends Model
         'reviewed_at',
     ];
 
+    /**
+     * Status di sisi penyedia (project_applications) adalah sumber utama.
+     * Setiap kali dibuat/berubah, salin ke tabel applications yang dibaca dashboard talenta.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (ProjectApplication $application) {
+            if ($application->wasRecentlyCreated || $application->wasChanged('status')) {
+                $application->syncTalentApplication();
+            }
+        });
+    }
+
+    public function syncTalentApplication(): void
+    {
+        Application::where('user_id', $this->user_id)
+            ->where('project_id', $this->project_id)
+            ->update(['status' => $this->status_label]);
+    }
+
     protected function casts(): array
     {
         return [

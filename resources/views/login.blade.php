@@ -11,6 +11,9 @@
 
     <link rel="stylesheet" href="{{ asset('css/login.css') }}">
     <script src="{{ asset('js/login.js') }}" defer></script>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
 </head>
 <body>
     <main class="container">
