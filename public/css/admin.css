@@ -691,6 +691,98 @@ td small {
     border-top: 1px solid var(--line);
 }
 
+/* Confirm Popup Modal Styling */
+.confirm-modal-box {
+    max-width: 440px !important;
+    text-align: center;
+    padding: 32px 28px 26px !important;
+    border-radius: 20px !important;
+    border: 1px solid var(--line);
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.08) !important;
+}
+
+.confirm-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+    transition: all 0.2s ease;
+}
+
+.confirm-icon-wrap.danger {
+    background: #fee2e2;
+    color: #ef4444;
+    border: 6px solid #fef2f2;
+}
+
+.confirm-icon-wrap.success {
+    background: #e7f7f4;
+    color: #0fa48f;
+    border: 6px solid #f0fdfa;
+}
+
+.confirm-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+}
+
+.confirm-desc {
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.confirm-desc strong {
+    color: var(--navy);
+    font-weight: 700;
+}
+
+.confirm-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    text-align: left;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.45;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    color: #475569;
+    margin-bottom: 20px;
+}
+
+.confirm-notice svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #64748b;
+}
+
+.confirm-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    border-top: none !important;
+    padding-top: 0 !important;
+    margin-top: 8px !important;
+}
+
+.confirm-modal-actions .btn {
+    flex: 1;
+    justify-content: center;
+    height: 42px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 10px;
+}
+
 .btn {
     display: inline-flex;
     align-items: center;
