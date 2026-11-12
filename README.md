@@ -1,59 +1,192 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TANDANG
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Platform yang mempertemukan **talenta muda** (pelajar, mahasiswa, fresh graduate) dengan **proyek nyata dari UMKM dan mitra**. Dibangun dengan Laravel 12.
 
-## About Laravel
+Ada tiga peran pengguna:
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Peran | Yang bisa dilakukan |
+|---|---|
+| **Talenta Muda** | Verifikasi status, isi profil & portofolio, asesmen gaya kerja, cari/rekomendasi proyek, melamar, pantau status lamaran |
+| **Penyedia Proyek** | Profil usaha, buat & kelola proyek, lihat profil + portofolio pelamar, terima/tolak pelamar |
+| **Admin** | Verifikasi dokumen talenta, kelola pengguna, kelola proyek |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Cara menjalankan project di laptopmu
 
-## Learning Laravel
+### 1. Yang perlu di-install dulu
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **PHP 8.2 atau lebih baru** (paling mudah lewat [Laragon](https://laragon.org) atau XAMPP)
+- **Composer**: https://getcomposer.org
+- **MySQL** (sudah termasuk di Laragon/XAMPP)
+- **Git**
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Node.js/npm **tidak wajib**, karena halaman-halaman TANDANG memakai CSS biasa dari folder `public/css`.
 
-## Laravel Sponsors
+### 2. Clone repo dan pindah ke branch yang benar
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+git clone https://github.com/TANDANG-Team/Tandang-.git
+cd Tandang-
+git checkout BismillahFront
+```
 
-### Premium Partners
+### 3. Install dependency
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+composer install
+```
 
-## Contributing
+### 4. Buat file `.env`
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+File `.env` berisi pengaturan lokal dan **tidak ikut di-push ke GitHub**, jadi setiap orang membuatnya sendiri dari contoh:
 
-## Code of Conduct
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+> Di Windows (CMD) pakai `copy .env.example .env`.
 
-## Security Vulnerabilities
+Buka `.env` lalu sesuaikan bagian database dengan MySQL di laptopmu. Bawaannya:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=tandang_db
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-## License
+### 5. Buat database
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Buat database kosong bernama **`tandang_db`** (lewat phpMyAdmin / HeidiSQL / Laragon), atau lewat terminal:
+
+```bash
+mysql -u root -e "CREATE DATABASE tandang_db"
+```
+
+### 6. Buat tabel + isi data contoh
+
+```bash
+php artisan migrate --seed
+```
+
+Perintah ini membuat semua tabel dan mengisi akun & proyek contoh (lihat daftar akun di bawah).
+
+> Mau mengulang dari nol? `php artisan migrate:fresh --seed` (**semua data di database akan dihapus**).
+
+### 7. Jalankan
+
+```bash
+php artisan serve
+```
+
+Buka **http://127.0.0.1:8000** di browser.
+
+---
+
+## Akun contoh (dari seeder)
+
+Hanya untuk development di laptop masing-masing.
+
+| Peran | Email | Password | Catatan |
+|---|---|---|---|
+| Admin | `admin@tandang.id` | `admin12345` | |
+| Penyedia | `penyedia@tandang.id` | `demo12345` | |
+| Penyedia | `halo@kopisejenak.id` | `password123` | |
+| Talenta | `budi.pratama@student.ui.ac.id` | `password123` | Terverifikasi, bisa melamar |
+| Talenta | `ahmad.fauzi@alumni.telkomuniversity.ac.id` | `password123` | Terverifikasi |
+| Talenta | `siti.nurhaliza@smkn1cimahi.sch.id` | `password123` | Verifikasi masih menunggu |
+| Talenta | `rina.wijaya@gmail.com` | `password123` | Verifikasi ditolak |
+
+Talenta yang statusnya belum terverifikasi tidak bisa melamar proyek; verifikasinya bisa disetujui dari akun Admin.
+
+---
+
+## Alur kerja Git bersama tim
+
+Sebelum mulai mengerjakan, ambil perubahan terbaru dari teman:
+
+```bash
+git checkout BismillahFront
+git pull origin BismillahFront
+```
+
+Setelah selesai:
+
+```bash
+git add .
+git commit -m "pesan singkat perubahanmu"
+git pull origin BismillahFront   # ambil perubahan teman dulu, selesaikan konflik kalau ada
+git push origin BismillahFront
+```
+
+Kalau ada **migration baru** dari teman setelah `git pull`, jalankan:
+
+```bash
+php artisan migrate
+```
+
+---
+
+## Yang sengaja tidak ada di GitHub
+
+| File/folder | Kenapa | Cara mendapatkannya |
+|---|---|---|
+| `.env` | Berisi pengaturan & kunci rahasia tiap laptop | Langkah 4 |
+| `vendor/` | Library Composer, ukurannya besar | `composer install` |
+| Data di database | Tiap orang punya database lokal sendiri | `php artisan migrate --seed` |
+| `storage/app/private/talent_documents/` | Dokumen verifikasi yang di-upload pengguna (data pribadi) | Muncul otomatis saat talenta meng-upload dokumen |
+| `storage/logs/`, cache | File sementara | Dibuat otomatis oleh Laravel |
+
+---
+
+## Masalah yang sering muncul
+
+| Error | Solusi |
+|---|---|
+| `No application encryption key has been specified` | `php artisan key:generate` |
+| `SQLSTATE[HY000] [1049] Unknown database 'tandang_db'` | Database belum dibuat (langkah 5) |
+| `SQLSTATE[HY000] [2002] ... connection refused` | MySQL belum dinyalakan (start di Laragon/XAMPP) |
+| `Base table or view not found` | `php artisan migrate` |
+| Tampilan tidak berubah setelah `git pull` | `php artisan optimize:clear` lalu refresh browser (Ctrl+F5) |
+| Ikon tab masih logo Laravel | Cache browser, tekan Ctrl+F5 |
+
+---
+
+## Struktur penting
+
+```
+app/Http/Controllers/
+  TalentController.php        → semua halaman Talenta Muda
+  Penyedia/                   → halaman Penyedia (proyek, pelamar, profil, notifikasi)
+  Admin/                      → halaman Admin (verifikasi, pengguna, proyek)
+app/Services/
+  WorkstyleMatchingService.php → asesmen gaya kerja & skor kecocokan proyek
+  TalentEligibilityService.php → aturan kelayakan talenta muda
+app/Models/                   → User, TalentProfile, Project, ProjectApplication, dll.
+resources/views/
+  talent/  penyedia/  admin/  layouts/
+public/css/                   → CSS tiap area (talent.css, admin.css, dashboard.css, ...)
+database/migrations/          → struktur tabel
+database/seeders/             → data contoh
+routes/web.php                → semua route
+```
+
+### Aturan bisnis yang perlu diketahui
+
+- **Status lamaran**: status di sisi penyedia (`project_applications`) adalah sumber utama dan otomatis disalin ke tabel `applications` yang dibaca dashboard talenta.
+- **Kuota proyek**: proyek otomatis disembunyikan dari katalog talenta & halaman depan ketika jumlah pelamar *diterima* sudah mencapai `talents_needed`. Kalau ada yang dibatalkan, proyek tampil lagi.
+- **Skor kecocokan**: kompetensi 45%, gaya kerja 25%, lokasi 15%, jadwal 15%.
+
+---
+
+## Menjalankan test
+
+```bash
+php artisan test
+```
+
+Test memakai database SQLite di memori, jadi tidak mengganggu database `tandang_db`.

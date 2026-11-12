@@ -37,7 +37,7 @@
     if (sel && other) {
         const sync = () => {
             const isOther = sel.value === '__lainnya__';
-            other.style.display = isOther ? '' : 'none';
+            other.hidden = !isOther;
             other.required = isOther;
             if (isOther && document.activeElement === sel) other.focus();
         };
@@ -142,7 +142,8 @@
                 </select>
                 <input type="text" name="category_other" id="categoryOther" value="{{ $categoryOther }}" maxlength="100"
                        placeholder="Ketik kategori, contoh: Kerajinan Tangan"
-                       style="width: 100%; margin-top: 8px; padding: 10px 14px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; {{ $selectedCategory === '__lainnya__' ? '' : 'display: none;' }}">
+                       @if($selectedCategory !== '__lainnya__') hidden @endif
+                       style="width: 100%; margin-top: 8px; padding: 10px 14px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none;">
                 @error('category')
                     <p style="margin: 6px 0 0; font-size: 12.5px; color: #dc2626;">{{ $message }}</p>
                 @enderror
