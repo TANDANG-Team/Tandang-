@@ -40,7 +40,7 @@ class ProjectController extends Controller
             $query->where('user_id', $providerFilter);
         }
 
-        $projects = $query->orderByDesc('id')->get();
+        $projects = $query->orderBy('id', 'asc')->get();
 
         // Get all providers for filter dropdown
         $providers = User::where('role', 'penyedia_proyek')->orderBy('name')->get();

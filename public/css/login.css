@@ -26,13 +26,45 @@ body {
 }
 
 .logo {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+    text-decoration: none;
 }
 
-.logo span {
-    color: #ffd166;
+.logo-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    transform: rotate(-7deg);
+}
+
+.logo-bar {
+    width: 6px;
+    border-radius: 2px;
+}
+
+.logo-bar.bar-1 {
+    height: 18px;
+    background-color: #ffffff;
+}
+
+.logo-bar.bar-2 {
+    height: 24px;
+    background-color: #ffb547;
+}
+
+.logo-bar.bar-3 {
+    height: 14px;
+    background-color: #99f6e4;
+}
+
+.logo-text {
+    font-size: 21px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 1.5px;
 }
 
 .intro {

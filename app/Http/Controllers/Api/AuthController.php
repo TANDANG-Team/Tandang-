@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\TalentProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -25,6 +26,17 @@ class AuthController extends Controller
             'password' => $validated['password'],
             'role' => $validated['role'],
         ]);
+
+        if ($user->role === 'talenta_muda') {
+            TalentProfile::create([
+                'user_id' => $user->id,
+                'category' => $request->input('category', 'Mahasiswa Aktif') ?: 'Mahasiswa Aktif',
+                'institution' => $request->input('institution', '-') ?: '-',
+                'major' => $request->input('major', '-') ?: '-',
+                'city' => $request->input('city', 'Bandung') ?: 'Bandung',
+                'verification_status' => 'Belum Mengajukan',
+            ]);
+        }
 
         $token = $user->createToken('tandang-app')->plainTextToken;
 

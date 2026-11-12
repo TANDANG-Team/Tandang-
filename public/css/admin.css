@@ -58,25 +58,45 @@ body {
 .sidebar-logo {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     padding: 0 10px 20px;
-    font-size: 19px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--teal);
     text-decoration: none;
     border-bottom: 1px solid var(--line);
+    user-select: none;
 }
 
-.sidebar-logo span.mark {
-    background: var(--teal);
-    color: #fff;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
-    font-size: 16px;
+.sidebar-logo .logo-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    transform: rotate(-7deg);
+}
+
+.sidebar-logo .logo-bar {
+    width: 6px;
+    border-radius: 2px;
+}
+
+.sidebar-logo .logo-bar.bar-1 {
+    height: 18px;
+    background-color: #0f9d8a;
+}
+
+.sidebar-logo .logo-bar.bar-2 {
+    height: 24px;
+    background-color: #ffb547;
+}
+
+.sidebar-logo .logo-bar.bar-3 {
+    height: 14px;
+    background-color: #18b8a2;
+}
+
+.sidebar-logo .logo-text {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: 1.5px;
 }
 
 .role-badge-tag {

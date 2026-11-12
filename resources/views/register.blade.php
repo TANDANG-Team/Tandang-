@@ -36,12 +36,46 @@
         }
 
         .logo {
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+            text-decoration: none;
         }
 
-        .logo span { color: #ffd166; }
+        .logo-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            transform: rotate(-7deg);
+        }
+
+        .logo-bar {
+            width: 6px;
+            border-radius: 2px;
+        }
+
+        .logo-bar.bar-1 {
+            height: 18px;
+            background-color: #ffffff;
+        }
+
+        .logo-bar.bar-2 {
+            height: 24px;
+            background-color: #ffb547;
+        }
+
+        .logo-bar.bar-3 {
+            height: 14px;
+            background-color: #99f6e4;
+        }
+
+        .logo-text {
+            font-size: 21px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 1.5px;
+        }
 
         .intro {
             position: relative;
@@ -280,7 +314,14 @@
 <body>
     <main class="container">
         <section class="welcome">
-            <div class="logo"><span>▥</span> TANDANG</div>
+            <a href="/" class="logo">
+                <div class="logo-bars">
+                    <span class="logo-bar bar-1"></span>
+                    <span class="logo-bar bar-2"></span>
+                    <span class="logo-bar bar-3"></span>
+                </div>
+                <span class="logo-text">TANDANG</span>
+            </a>
 
             <div class="intro">
                 <div class="eyebrow">Ruang tumbuh bersama</div>
@@ -326,6 +367,18 @@
                         <input id="name" name="name" type="text" placeholder="Contoh: Nara Putri" required autocomplete="name">
                     </div>
 
+                    <div id="talentFields">
+                        <div class="field">
+                            <label for="institution">Instansi / Kampus / Sekolah</label>
+                            <input id="institution" name="institution" type="text" placeholder="Contoh: Universitas Indonesia, SMKN 1 Cimahi">
+                        </div>
+
+                        <div class="field">
+                            <label for="major">Jurusan / Program Studi</label>
+                            <input id="major" name="major" type="text" placeholder="Contoh: Ilmu Komputer, Rekayasa Perangkat Lunak">
+                        </div>
+                    </div>
+
                     <div class="field">
                         <label for="email">Email</label>
                         <input id="email" name="email" type="email" placeholder="nama@email.com" required autocomplete="email">
@@ -353,6 +406,18 @@
         const form = document.getElementById('registerForm');
         const message = document.getElementById('message');
         const submitButton = form.querySelector('button[type="submit"]');
+        const talentFields = document.getElementById('talentFields');
+
+        // Toggle input khusus talenta muda
+        form.querySelectorAll('input[name="role"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'talenta_muda') {
+                    talentFields.style.display = 'block';
+                } else {
+                    talentFields.style.display = 'none';
+                }
+            });
+        });
 
         form.addEventListener('submit', async function (event) {
             event.preventDefault();
@@ -372,6 +437,20 @@
             submitButton.disabled = true;
             submitButton.textContent = 'Memproses...';
 
+            const role = form.querySelector('input[name="role"]:checked').value;
+            const payload = {
+                name: form.name.value.trim(),
+                email: form.email.value.trim(),
+                password: password,
+                password_confirmation: confirmation,
+                role: role
+            };
+
+            if (role === 'talenta_muda') {
+                payload.institution = form.institution.value.trim();
+                payload.major = form.major.value.trim();
+            }
+
             try {
                 const response = await fetch('/api/register', {
                     method: 'POST',
@@ -379,13 +458,7 @@
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({
-                        name: form.name.value.trim(),
-                        email: form.email.value.trim(),
-                        password: password,
-                        password_confirmation: confirmation,
-                        role: form.querySelector('input[name="role"]:checked').value
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();

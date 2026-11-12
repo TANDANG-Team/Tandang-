@@ -14,8 +14,12 @@
         <!-- Sidebar Navigation -->
         <aside class="app-sidebar">
             <a href="/" class="sidebar-logo">
-                <span class="mark">▥</span>
-                TANDANG
+                <div class="logo-bars">
+                    <span class="logo-bar bar-1"></span>
+                    <span class="logo-bar bar-2"></span>
+                    <span class="logo-bar bar-3"></span>
+                </div>
+                <span class="logo-text">TANDANG</span>
             </a>
 
             <div class="role-badge-tag">Admin Panel</div>

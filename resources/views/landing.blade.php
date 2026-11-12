@@ -39,8 +39,18 @@
 
             <!-- Auth Actions -->
             <div class="nav-actions">
-                <a href="/login" class="btn-login">Masuk</a>
-                <a href="/register" class="btn-primary">Daftar Sekarang</a>
+                @auth
+                    @if(Auth::user()->role === 'talenta_muda' || Auth::user()->role === 'talent')
+                        <a href="{{ route('talent.beranda') }}" class="btn-primary">Dashboard Talenta</a>
+                    @elseif(Auth::user()->role === 'admin' || str_ends_with(strtolower(Auth::user()->email), '@tandang.id'))
+                        <a href="{{ route('admin.verifikasi.index') }}" class="btn-primary">Panel Admin</a>
+                    @else
+                        <a href="{{ url('/') }}" class="btn-primary">Dashboard</a>
+                    @endif
+                @else
+                    <a href="/login" class="btn-login">Masuk</a>
+                    <a href="/register" class="btn-primary">Daftar Sekarang</a>
+                @endauth
             </div>
         </div>
     </header>
@@ -241,7 +251,7 @@
                     <span class="eyebrow">PROYEK TERBARU</span>
                     <h2 class="section-title">Ada kesempatan untuk setiap talenta</h2>
                 </div>
-                <a href="#proyek" class="link-view-all">
+                <a href="{{ Auth::check() && (Auth::user()->role === 'talenta_muda' || Auth::user()->role === 'talent') ? route('talent.cari') : '/login' }}" class="link-view-all">
                     <span>Lihat semua proyek</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9 18 15 12 9 6"></polyline>
@@ -250,120 +260,65 @@
             </div>
 
             <div class="projects-grid">
-                <!-- Card 1 -->
-                <div class="project-card">
-                    <div class="project-card-top">
-                        <div class="company-avatar">D</div>
-                        <div class="match-tag">92% Cocok</div>
-                    </div>
-                    <div class="company-name">Dapur Nusa</div>
-                    <h4 class="project-role-title">Fotografer Acara Kuliner</h4>
-                    <div class="project-meta-list">
-                        <div class="project-meta-item">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                            <span>Bandung</span>
+                @forelse($projects ?? [] as $p)
+                    @php
+                        $initial = strtoupper(substr($p->provider_name, 0, 1));
+                        $dateStr = ($p->start_date && $p->end_date)
+                            ? \Carbon\Carbon::parse($p->start_date)->locale('id')->isoFormat('D MMM') . '–' . \Carbon\Carbon::parse($p->end_date)->locale('id')->isoFormat('D MMM Y')
+                            : ($p->schedule ?: 'Fleksibel');
+                        $detailUrl = Auth::check() && (Auth::user()->role === 'talenta_muda' || Auth::user()->role === 'talent') ? route('talent.cari') : '/login';
+                        $matchLabel = isset($p->match_score) ? ($p->match_score . '% Cocok') : ($p->compensation ?: 'Terbuka');
+                    @endphp
+                    <div class="project-card">
+                        <div class="project-card-top">
+                            <div class="company-avatar">{{ $initial }}</div>
+                            <div class="match-tag">{{ $matchLabel }}</div>
                         </div>
-                        <div class="project-meta-item">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="16" y1="2" x2="16" y2="6"></line>
-                                <line x1="8" y1="2" x2="8" y2="6"></line>
-                                <line x1="3" y1="10" x2="21" y2="10"></line>
-                            </svg>
-                            <span>24–25 Agu 2025</span>
+                        <div class="company-name">{{ $p->provider_name }}</div>
+                        <h4 class="project-role-title">{{ $p->title }}</h4>
+                        <div class="project-meta-list">
+                            <div class="project-meta-item">
+                                @if(strtolower($p->work_type) === 'remote')
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                                    </svg>
+                                @else
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                @endif
+                                <span>{{ $p->location }} ({{ $p->work_type }})</span>
+                            </div>
+                            <div class="project-meta-item">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <span>{{ $dateStr }}</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="project-skills">
-                        <span class="skill-pill">Fotografi</span>
-                        <span class="skill-pill">Adobe Lightroom</span>
-                    </div>
-                    <a href="/login" class="btn-card-detail">
-                        <span>Lihat Detail</span>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                    </a>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="project-card">
-                    <div class="project-card-top">
-                        <div class="company-avatar">K</div>
-                        <div class="match-tag">86% Cocok</div>
-                    </div>
-                    <div class="company-name">Kopi Sejenak</div>
-                    <h4 class="project-role-title">Penjaga Booth Local Market</h4>
-                    <div class="project-meta-list">
-                        <div class="project-meta-item">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                            <span>Jakarta Selatan</span>
+                        <div class="project-skills">
+                            @foreach(array_slice($p->skills ?? [], 0, 3) as $sk)
+                                <span class="skill-pill">{{ $sk }}</span>
+                            @endforeach
                         </div>
-                        <div class="project-meta-item">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="16" y1="2" x2="16" y2="6"></line>
-                                <line x1="8" y1="2" x2="8" y2="6"></line>
-                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                        <a href="{{ $detailUrl }}" class="btn-card-detail">
+                            <span>Lihat Detail</span>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
                             </svg>
-                            <span>30 Agu–1 Sep 2025</span>
-                        </div>
+                        </a>
                     </div>
-                    <div class="project-skills">
-                        <span class="skill-pill">Komunikasi</span>
-                        <span class="skill-pill">Pelayanan</span>
+                @empty
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 48px; background: #fff; border-radius: 16px; border: 1px dashed var(--color-line-subtle);">
+                        <p style="color: var(--color-text-muted);">Belum ada proyek yang dipublikasikan saat ini.</p>
                     </div>
-                    <a href="/login" class="btn-card-detail">
-                        <span>Lihat Detail</span>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                    </a>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="project-card">
-                    <div class="project-card-top">
-                        <div class="company-avatar">R</div>
-                        <div class="match-tag">81% Cocok</div>
-                    </div>
-                    <div class="company-name">Ruang Rupa</div>
-                    <h4 class="project-role-title">Admin Data Produk</h4>
-                    <div class="project-meta-list">
-                        <div class="project-meta-item">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                                <line x1="8" y1="21" x2="16" y2="21"></line>
-                                <line x1="12" y1="17" x2="12" y2="21"></line>
-                            </svg>
-                            <span>Remote</span>
-                        </div>
-                        <div class="project-meta-item">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="16" y1="2" x2="16" y2="6"></line>
-                                <line x1="8" y1="2" x2="8" y2="6"></line>
-                                <line x1="3" y1="10" x2="21" y2="10"></line>
-                            </svg>
-                            <span>2–13 Sep 2025</span>
-                        </div>
-                    </div>
-                    <div class="project-skills">
-                        <span class="skill-pill">Spreadsheet</span>
-                        <span class="skill-pill">Teliti</span>
-                    </div>
-                    <a href="/login" class="btn-card-detail">
-                        <span>Lihat Detail</span>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                    </a>
-                </div>
+                @endforelse
             </div>
         </div>
     </section>

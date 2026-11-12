@@ -15,7 +15,14 @@
 <body>
     <main class="container">
         <section class="welcome">
-            <div class="logo"><span>▥</span> TANDANG</div>
+            <a href="/" class="logo">
+                <div class="logo-bars">
+                    <span class="logo-bar bar-1"></span>
+                    <span class="logo-bar bar-2"></span>
+                    <span class="logo-bar bar-3"></span>
+                </div>
+                <span class="logo-text">TANDANG</span>
+            </a>
             <div class="intro">
                 <div class="eyebrow">Ruang tumbuh bersama</div>
                 <h1>Selamat datang<br>kembali.</h1>

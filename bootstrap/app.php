@@ -15,7 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'penyedia' => \App\Http\Middleware\EnsureUserIsPenyedia::class,
+            'admin'    => \App\Http\Middleware\EnsureUserIsAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -32,4 +33,3 @@ return Application::configure(basePath: dirname(__DIR__))
             return null;
         });
     })->create();
-
