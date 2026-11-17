@@ -67,13 +67,13 @@ Buat database kosong bernama **`tandang_db`** (lewat phpMyAdmin / HeidiSQL / Lar
 mysql -u root -e "CREATE DATABASE tandang_db"
 ```
 
-### 6. Buat tabel + isi data contoh
+### 6. Buat tabel + data awal
 
 ```bash
 php artisan migrate --seed
 ```
 
-Perintah ini membuat semua tabel dan mengisi akun & proyek contoh (lihat daftar akun di bawah).
+Perintah ini membuat semua tabel lalu mengisi data awal **minimal**: satu akun Admin dan paket Sponsored Project. Tidak ada akun Talenta/Penyedia, proyek, atau rating contoh — semuanya dibuat sendiri lewat aplikasi (lihat [Menguji alur dari awal](#menguji-alur-dari-awal)).
 
 > Mau mengulang dari nol? `php artisan migrate:fresh --seed` (**semua data di database akan dihapus**).
 
@@ -87,21 +87,25 @@ Buka **http://127.0.0.1:8000** di browser.
 
 ---
 
-## Akun contoh (dari seeder)
+## Akun bawaan
 
-Hanya untuk development di laptop masing-masing.
+| Peran | Email | Password |
+|---|---|---|
+| Admin | `admin@tandang.id` | `admin12345` |
 
-| Peran | Email | Password | Catatan |
-|---|---|---|---|
-| Admin | `admin@tandang.id` | `admin12345` | |
-| Penyedia | `penyedia@tandang.id` | `demo12345` | |
-| Penyedia | `halo@kopisejenak.id` | `password123` | |
-| Talenta | `budi.pratama@student.ui.ac.id` | `password123` | Terverifikasi, bisa melamar |
-| Talenta | `ahmad.fauzi@alumni.telkomuniversity.ac.id` | `password123` | Terverifikasi |
-| Talenta | `siti.nurhaliza@smkn1cimahi.sch.id` | `password123` | Verifikasi masih menunggu |
-| Talenta | `rina.wijaya@gmail.com` | `password123` | Verifikasi ditolak |
+Hanya untuk development di laptop masing-masing. Akun lain dibuat lewat halaman **Daftar** (`/register`).
 
-Talenta yang statusnya belum terverifikasi tidak bisa melamar proyek; verifikasinya bisa disetujui dari akun Admin.
+Kalau halaman Promosi Proyek menampilkan "Paket promosi belum tersedia" (database lama sebelum fitur Sponsored Project), jalankan `php artisan db:seed --class=PromotionPackageSeeder`.
+
+## Menguji alur dari awal
+
+1. **Daftar Penyedia** di `/register` (pilih Penyedia Proyek) → lengkapi Profil Usaha → **Buat Proyek** dan publikasikan.
+2. **Daftar Talenta** di `/register` (pilih Talenta Muda) → lengkapi profil → unggah dokumen di menu **Verifikasi**.
+3. Login **Admin** → menu Verifikasi → setujui dokumen Talenta. Talenta yang belum terverifikasi tidak bisa melamar.
+4. Talenta mengisi **Asesmen Gaya Kerja** (opsional, untuk skor kecocokan) → **Cari Proyek** → lamar. Kuota pelamar maksimal 2 × jumlah talenta dibutuhkan; lamaran bisa dibatalkan maks. 3 kali per 7 hari.
+5. Penyedia membuka **Pelamar** → terima/tolak. Lamaran yang diterima membuat catatan pengerjaan.
+6. Saat pekerjaan selesai, salah satu pihak **mengajukan selesai** dan pihak lain **mengonfirmasi** (menu Penilaian Talenta / Riwayat & Penilaian). Setelah itu keduanya bisa saling memberi **rating** dalam 7 hari.
+7. **Sponsored Project** hanya bisa dibeli Penyedia dengan rating minimal 4,0 dari minimal 3 penilaian Talenta. Di halaman pembayaran ada timer 5 menit; tombol **Simulasikan Pembayaran Berhasil** (hanya di luar production) mengaktifkan promosi 4 × 24 jam tanpa dihitung sebagai pendapatan. Pembayaran QRIS nyata butuh `QRIS_MERCHANT_NAME` di `.env` dan gambar `public/images/payment/qris-sponsor.png`.
 
 ---
 

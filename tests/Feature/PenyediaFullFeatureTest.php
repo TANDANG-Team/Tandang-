@@ -7,7 +7,6 @@ use App\Models\Project;
 use App\Models\ProjectApplication;
 use App\Models\ProviderNotification;
 use App\Models\User;
-use Database\Seeders\ProviderDemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -16,9 +15,31 @@ class PenyediaFullFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_demo_provider_login_redirects_to_provider_dashboard(): void
+    public function test_provider_login_redirects_to_provider_dashboard(): void
     {
-        $this->seed(ProviderDemoSeeder::class);
+        $provider = User::create([
+            'name' => 'Dimas Nugraha',
+            'email' => 'penyedia@tandang.id',
+            'password' => Hash::make('demo12345'),
+            'role' => 'penyedia_proyek',
+        ]);
+        OrganizationProfile::create([
+            'user_id' => $provider->id,
+            'organization_name' => 'Dapur Nusa',
+            'industry_type' => 'Kuliner & F&B',
+            'city' => 'Bandung',
+        ]);
+        Project::create([
+            'user_id' => $provider->id,
+            'title' => 'Fotografer Acara Kuliner',
+            'category' => 'Kreatif',
+            'location' => 'Bandung',
+            'work_method' => 'onsite',
+            'compensation' => 'Rp 750.000',
+            'talents_needed' => 1,
+            'description' => 'Mendokumentasikan festival kuliner lokal.',
+            'status' => 'published',
+        ]);
 
         $response = $this->postJson('/web-login', [
             'email' => 'penyedia@tandang.id',

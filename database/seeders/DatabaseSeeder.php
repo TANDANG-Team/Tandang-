@@ -7,13 +7,13 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Data awal minimal: akun Admin dan paket Sponsored Project.
+     * Akun Talenta/Penyedia, proyek, lamaran, dan rating dibuat lewat aplikasi.
      */
     public function run(): void
     {
         $this->call([
-            AdminAndTalentSeeder::class,
-            ProjectAndProviderSeeder::class,
+            AdminSeeder::class,
             PromotionPackageSeeder::class,
         ]);
     }
