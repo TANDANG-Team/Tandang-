@@ -455,6 +455,11 @@
             background: #fef2f2;
             color: #991b1b;
         }
+
+        .badge-dibatalkan {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
     </style>
     @stack('styles')
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">

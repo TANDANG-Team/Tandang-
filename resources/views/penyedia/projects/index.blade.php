@@ -96,6 +96,10 @@
                                    style="font-weight: 700; color: #2563eb; text-decoration: underline;">
                                     {{ $project->applications_count }} pelamar
                                 </a>
+                                <div style="margin-top: 4px; font-size: 11.5px; color: #6b7280;"
+                                     title="Slot pelamar aktif (menunggu + review + diterima) dari batas 2× talenta dibutuhkan. Pelamar ditolak tidak dihitung.">
+                                    {{ $project->active_applications_count }}/{{ \App\Services\ProjectApplyService::maxApplicants($project) }} slot aktif
+                                </div>
                             </td>
                             <td style="padding: 16px 18px;">
                                 <span class="badge-status badge-{{ $project->status }}">

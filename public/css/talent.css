@@ -280,6 +280,12 @@ body {
     border: 1px solid #fecaca;
 }
 
+.alert-info {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
 /* Buttons */
 .btn {
     display: inline-flex;

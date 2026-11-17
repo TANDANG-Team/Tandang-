@@ -10,9 +10,22 @@
     </div>
 </div>
 
+<!-- Kuota pembatalan (maks. 3 per 7 hari) -->
+<div class="alert {{ $cancelStatus['remaining'] > 0 ? 'alert-info' : 'alert-warning' }}" style="margin-bottom: 16px; font-size: 13.5px;">
+    <span>
+        Sisa pembatalan lamaran: <strong>{{ $cancelStatus['remaining'] }} dari {{ $cancelStatus['limit'] }}</strong>
+        dalam {{ $cancelStatus['window_days'] }} hari terakhir.
+        @if($cancelStatus['next_available_at'])
+            Pembatalan berikutnya bisa dilakukan mulai
+            <strong>{{ \Illuminate\Support\Carbon::parse($cancelStatus['next_available_at'])->setTimezone(config('app.timezone'))->format('d/m/Y H:i') }}</strong>.
+        @endif
+        Lamaran yang dibatalkan tidak bisa diajukan lagi ke proyek yang sama.
+    </span>
+</div>
+
 <!-- Tabs Status Filter -->
 <div class="tabs-nav">
-    @foreach(['Semua', 'Menunggu', 'Dalam Review', 'Diterima', 'Ditolak'] as $tab)
+    @foreach(['Semua', 'Menunggu', 'Dalam Review', 'Diterima', 'Ditolak', 'Dibatalkan'] as $tab)
         <a href="{{ route('talent.lamaran', ['tab' => $tab]) }}" 
            class="tab-btn {{ $currentTab === $tab ? 'active' : '' }}">
             {{ $tab }}
@@ -30,6 +43,7 @@
                     <th>Pesan Pengantar</th>
                     <th>Status</th>
                     <th>Catatan Keputusan</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -40,8 +54,10 @@
                             'Diterima' => 'badge-success',
                             'Ditolak' => 'badge-danger',
                             'Dalam Review' => 'badge-info',
+                            'Dibatalkan' => 'badge-purple',
                             default => 'badge-warning'
                         };
+                        $canCancel = in_array($app->project_id, $cancellableProjectIds);
                     @endphp
                     <tr>
                         <td>
@@ -69,6 +85,22 @@
                                 <span style="font-size: 12.5px; color: #64748b; font-style: italic;">
                                     "{{ $app->decision_reason }}"
                                 </span>
+                            @else
+                                <span style="color: #cbd5e1;">-</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($canCancel)
+                                <form method="POST" action="{{ route('talent.lamar.batal', $app->project_id) }}" style="margin: 0;"
+                                      onsubmit="return confirm('Batalkan lamaran ini? Anda TIDAK dapat mengajukan lagi ke proyek yang sama, dan ini memakai 1 dari {{ $cancelStatus['limit'] }} jatah pembatalan per {{ $cancelStatus['window_days'] }} hari.');">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="btn btn-secondary btn-sm"
+                                            @disabled($cancelStatus['remaining'] === 0)
+                                            title="{{ $cancelStatus['remaining'] === 0 ? 'Batas pembatalan 7 hari terakhir sudah habis.' : 'Batalkan lamaran' }}">
+                                        Batalkan
+                                    </button>
+                                </form>
                             @else
                                 <span style="color: #cbd5e1;">-</span>
                             @endif

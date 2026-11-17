@@ -45,7 +45,7 @@ class ProjectController extends Controller
             });
         }
 
-        $projects = $projectsQuery->withCount(['applications', 'acceptedApplications'])->latest()->paginate(10)->withQueryString();
+        $projects = $projectsQuery->withCount('applications')->withApplyCounts()->latest()->paginate(10)->withQueryString();
 
         return view('penyedia.projects.index', [
             'user' => $user,

@@ -179,6 +179,8 @@ routes/web.php                → semua route
 
 - **Status lamaran**: status di sisi penyedia (`project_applications`) adalah sumber utama dan otomatis disalin ke tabel `applications` yang dibaca dashboard talenta.
 - **Kuota proyek**: proyek otomatis disembunyikan dari katalog talenta & halaman depan ketika jumlah pelamar *diterima* sudah mencapai `talents_needed`. Kalau ada yang dibatalkan, proyek tampil lagi.
+- **Kuota pelamar**: maksimal 2 × `talents_needed` lamaran *aktif* (menunggu, dalam review, diterima). Lamaran ditolak tidak dihitung, jadi slotnya terbuka lagi. Talenta yang pernah ditolak di suatu proyek tidak bisa melamar ulang ke proyek itu. Semua aturan ada di `app/Services/ProjectApplyService.php` dan dihitung dinamis dari `project_applications`.
+- **Pembatalan lamaran**: talenta bisa membatalkan lamaran yang masih *menunggu* / *dalam review*, maksimal 3 kali dalam 7 hari terakhir (jendela bergulir). Lamaran yang dibatalkan membuka slot kuota, tetapi talenta itu tidak bisa mengajukan lagi ke proyek yang sama. Penyedia tidak bisa memproses lamaran yang sudah dibatalkan.
 - **Skor kecocokan**: kompetensi 45%, gaya kerja 25%, lokasi 15%, jadwal 15%.
 
 ---
@@ -190,3 +192,9 @@ php artisan test
 ```
 
 Test memakai database SQLite di memori, jadi tidak mengganggu database `tandang_db`.
+
+Uji race condition apply (`ProjectApplyConcurrencyTest`) menjalankan beberapa proses PHP sekaligus di file SQLite sementara. Untuk menguji juga di MySQL (membuat lalu menghapus database terpisah `tandang_apply_race_test`):
+
+```bash
+RACE_TEST_MYSQL=1 php artisan test --filter ProjectApplyConcurrencyTest
+```

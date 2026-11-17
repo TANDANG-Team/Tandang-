@@ -8,6 +8,7 @@ use App\Models\ProjectApplication;
 use App\Models\ProviderNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ApplicantController extends Controller
@@ -35,11 +36,12 @@ class ApplicantController extends Controller
             'dalam_review' => (clone $baseQuery)->where('status', ProjectApplication::STATUS_DALAM_REVIEW)->count(),
             'diterima' => (clone $baseQuery)->where('status', ProjectApplication::STATUS_DITERIMA)->count(),
             'ditolak' => (clone $baseQuery)->where('status', ProjectApplication::STATUS_DITOLAK)->count(),
+            'dibatalkan' => (clone $baseQuery)->where('status', ProjectApplication::STATUS_DIBATALKAN)->count(),
         ];
 
         $applicationsQuery = clone $baseQuery;
 
-        if ($status !== 'semua' && in_array($status, [ProjectApplication::STATUS_MENUNGGU, ProjectApplication::STATUS_DALAM_REVIEW, ProjectApplication::STATUS_DITERIMA, ProjectApplication::STATUS_DITOLAK])) {
+        if ($status !== 'semua' && in_array($status, [ProjectApplication::STATUS_MENUNGGU, ProjectApplication::STATUS_DALAM_REVIEW, ProjectApplication::STATUS_DITERIMA, ProjectApplication::STATUS_DITOLAK, ProjectApplication::STATUS_DIBATALKAN])) {
             $applicationsQuery->where('status', $status);
         }
 
@@ -90,19 +92,45 @@ class ApplicantController extends Controller
         $project = $application->project;
         $applicantName = $application->user->name ?? 'Talenta';
 
-        // Business rule: Enforce quota when accepting
-        if ($validated['status'] === ProjectApplication::STATUS_DITERIMA) {
-            $acceptedCount = $project->acceptedApplications()->where('id', '!=', $application->id)->count();
-            if ($acceptedCount >= $project->talents_needed) {
-                return redirect()->back()
-                    ->with('error', "Gagal menerima pelamar: Kuota talenta untuk proyek \"{$project->title}\" sudah terpenuhi ({$project->talents_needed} orang).");
+        // Kunci baris proyek yang sama dengan ProjectApplyService::apply() agar accept/reject
+        // dan apply baru diproses berurutan, dan dua accept bersamaan tidak melebihi kebutuhan.
+        $result = DB::transaction(function () use ($project, $application, $validated) {
+            $project = Project::whereKey($project->id)->lockForUpdate()->firstOrFail();
+
+            // Baca ulang setelah lock: talenta mungkin baru saja membatalkan lamarannya.
+            $application->refresh();
+            if ($application->status === ProjectApplication::STATUS_DIBATALKAN) {
+                return 'cancelled';
             }
+
+            // Business rule: Enforce quota when accepting
+            if ($validated['status'] === ProjectApplication::STATUS_DITERIMA) {
+                $acceptedCount = $project->acceptedApplications()->where('id', '!=', $application->id)->count();
+                if ($acceptedCount >= $project->talents_needed) {
+                    return 'quota_filled';
+                }
+            }
+
+            // Pendaftaran tertutup otomatis saat jumlah diterima = talents_needed, karena status
+            // pendaftaran dihitung dinamis (Project::openForTalent / ProjectApplyService).
+            // Lamaran lain yang masih menunggu dibiarkan apa adanya agar tetap bisa diproses penyedia.
+            $application->update([
+                'status' => $validated['status'],
+                'reviewed_at' => now(),
+            ]);
+
+            return 'ok';
+        }, 3);
+
+        if ($result === 'cancelled') {
+            return redirect()->back()
+                ->with('error', "Gagal memproses: {$applicantName} sudah membatalkan lamarannya untuk proyek \"{$project->title}\".");
         }
 
-        $application->update([
-            'status' => $validated['status'],
-            'reviewed_at' => now(),
-        ]);
+        if ($result === 'quota_filled') {
+            return redirect()->back()
+                ->with('error', "Gagal menerima pelamar: Kuota talenta untuk proyek \"{$project->title}\" sudah terpenuhi ({$project->talents_needed} orang).");
+        }
 
         // Record provider notification
         $statusText = match ($validated['status']) {
@@ -126,7 +154,7 @@ class ApplicantController extends Controller
         $message = "Status pelamar {$applicantName} berhasil diubah menjadi {$application->status_label}.";
 
         if ($validated['status'] === ProjectApplication::STATUS_DITERIMA && $project->fresh()->isQuotaFilled()) {
-            $message .= " Kuota proyek \"{$project->title}\" kini terpenuhi, sehingga proyek otomatis tidak ditampilkan lagi di katalog talenta.";
+            $message .= " Kuota proyek \"{$project->title}\" kini terpenuhi: pendaftaran otomatis ditutup dan proyek tidak ditampilkan lagi di katalog talenta. Lamaran yang masih menunggu tetap bisa Anda proses.";
         }
 
         return redirect()->back()->with($alertType, $message);

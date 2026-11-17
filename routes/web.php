@@ -163,6 +163,8 @@ Route::middleware(['auth'])->prefix('talent')->name('talent.')->group(function (
     Route::get('/rekomendasi', [TalentController::class, 'rekomendasi'])->name('rekomendasi');
     Route::get('/proyek', [TalentController::class, 'cariProyek'])->name('cari');
     Route::post('/proyek/{id}/lamar', [TalentController::class, 'lamarProyek'])->name('lamar');
+    Route::get('/proyek/{id}/status-lamaran', [TalentController::class, 'statusLamaran'])->name('lamar.status');
+    Route::patch('/proyek/{id}/batal', [TalentController::class, 'batalkanLamaran'])->name('lamar.batal');
     Route::get('/lamaran', [TalentController::class, 'lamaranSaya'])->name('lamaran');
 
     // Profil & Portofolio

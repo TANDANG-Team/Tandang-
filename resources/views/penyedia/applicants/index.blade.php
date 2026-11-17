@@ -58,6 +58,10 @@
            style="padding: 7px 14px; border-radius: 8px; font-size: 13.5px; font-weight: 600; text-decoration: none; {{ $currentStatus === 'ditolak' ? 'background: #0fa48f; color: #ffffff;' : 'background: #f3f4f6; color: #4b5563;' }}">
             Ditolak ({{ $counts['ditolak'] }})
         </a>
+        <a href="{{ route('penyedia.applicants.index', ['status' => 'dibatalkan', 'project_id' => $currentProjectId, 'search' => $search]) }}"
+           style="padding: 7px 14px; border-radius: 8px; font-size: 13.5px; font-weight: 600; text-decoration: none; {{ $currentStatus === 'dibatalkan' ? 'background: #0fa48f; color: #ffffff;' : 'background: #f3f4f6; color: #4b5563;' }}">
+            Dibatalkan ({{ $counts['dibatalkan'] }})
+        </a>
     </div>
 
     <!-- Project Filter & Search -->
@@ -148,8 +152,14 @@
                         Lihat Profil
                     </button>
 
+                    @if($app->status === 'dibatalkan')
+                        <span style="font-size: 12.5px; color: #6b7280; font-style: italic;">
+                            Dibatalkan oleh talenta{{ $app->cancelled_at ? ' pada ' . $app->cancelled_at->format('d M Y') : '' }}
+                        </span>
+                    @endif
+
                     <!-- Form Terima -->
-                    @if($app->status !== 'diterima')
+                    @if(! in_array($app->status, ['diterima', 'dibatalkan'], true))
                         <form action="{{ route('penyedia.applicants.status', $app) }}" method="POST" style="margin: 0;"
                               onsubmit="return confirm('Apakah Anda yakin ingin MENERIMA pelamar ini untuk proyek {{ $app->project->title }}?');">
                             @csrf
@@ -162,7 +172,7 @@
                     @endif
 
                     <!-- Form Tolak -->
-                    @if($app->status !== 'ditolak')
+                    @if(! in_array($app->status, ['ditolak', 'dibatalkan'], true))
                         <form action="{{ route('penyedia.applicants.status', $app) }}" method="POST" style="margin: 0;"
                               onsubmit="return confirm('Apakah Anda yakin ingin MENOLAK pelamar ini?');">
                             @csrf

@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ApplyNotAllowedException;
+use App\Exceptions\CancelNotAllowedException;
 use App\Models\Application;
 use App\Models\Project;
 use App\Models\ProjectApplication;
 use App\Models\ProviderNotification;
 use App\Models\TalentProfile;
+use App\Services\ProjectApplyService;
 use App\Services\TalentEligibilityService;
 use App\Services\WorkstyleMatchingService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,13 +25,16 @@ class TalentController extends Controller
 {
     protected TalentEligibilityService $eligibilityService;
     protected WorkstyleMatchingService $matchingService;
+    protected ProjectApplyService $applyService;
 
     public function __construct(
         TalentEligibilityService $eligibilityService,
-        WorkstyleMatchingService $matchingService
+        WorkstyleMatchingService $matchingService,
+        ProjectApplyService $applyService
     ) {
         $this->eligibilityService = $eligibilityService;
         $this->matchingService = $matchingService;
+        $this->applyService = $applyService;
     }
 
     public function beranda(): View
@@ -36,6 +43,7 @@ class TalentController extends Controller
         $talent = $this->getOrCreateTalentProfile($user);
 
         $projects = Project::openForTalent()
+            ->withApplyCounts()
             ->orderBy('id', 'asc')
             ->get();
 
@@ -51,8 +59,7 @@ class TalentController extends Controller
             ? $projects->sortByDesc('match_score')->take(6)->values()
             : $projects->take(6)->values();
 
-        $appliedProjectIds = Application::where('user_id', $user->id)->pluck('project_id')->toArray();
-        $totalApplied = count($appliedProjectIds);
+        $totalApplied = Application::where('user_id', $user->id)->count();
 
         $recentApplications = Application::with('project')
             ->where('user_id', $user->id)
@@ -65,7 +72,7 @@ class TalentController extends Controller
             'talent' => $talent,
             'topRecommendations' => $topRecommendations,
             'recentApplications' => $recentApplications,
-            'appliedProjectIds' => $appliedProjectIds,
+            'applyStatuses' => $this->applyService->getApplyStatuses($topRecommendations, $user),
             'totalApplied' => $totalApplied,
         ]);
     }
@@ -76,6 +83,7 @@ class TalentController extends Controller
         $talent = $this->getOrCreateTalentProfile($user);
 
         $projects = Project::openForTalent()
+            ->withApplyCounts()
             ->orderBy('id', 'asc')
             ->get();
 
@@ -91,13 +99,11 @@ class TalentController extends Controller
             $projects = $projects->sortByDesc('match_score')->values();
         }
 
-        $appliedProjectIds = Application::where('user_id', $user->id)->pluck('project_id')->toArray();
-
         return view('talent.rekomendasi', [
             'user' => $user,
             'talent' => $talent,
             'projects' => $projects,
-            'appliedProjectIds' => $appliedProjectIds,
+            'applyStatuses' => $this->applyService->getApplyStatuses($projects, $user),
         ]);
     }
 
@@ -106,7 +112,7 @@ class TalentController extends Controller
         $user = Auth::user();
         $talent = $this->getOrCreateTalentProfile($user);
 
-        $query = Project::openForTalent();
+        $query = Project::openForTalent()->withApplyCounts();
 
         if ($request->filled('q')) {
             $q = $request->q;
@@ -142,8 +148,6 @@ class TalentController extends Controller
             return $project;
         });
 
-        $appliedProjectIds = Application::where('user_id', $user->id)->pluck('project_id')->toArray();
-
         $categories = Project::distinct()->pluck('category')->filter()->values();
         if ($categories->isEmpty()) {
             $categories = collect(['Kreatif', 'Operasional', 'Administrasi', 'Web Development', 'Desain Grafis', 'Digital Marketing']);
@@ -154,45 +158,27 @@ class TalentController extends Controller
             'talent' => $talent,
             'projects' => $projects,
             'categories' => $categories,
-            'appliedProjectIds' => $appliedProjectIds,
+            'applyStatuses' => $this->applyService->getApplyStatuses($projects, $user),
             'filters' => $request->only(['q', 'category', 'work_type', 'location']),
         ]);
     }
 
-    public function lamarProyek(Request $request, $id): RedirectResponse
+    public function lamarProyek(Request $request, $id): RedirectResponse|JsonResponse
     {
         $user = Auth::user();
         $talent = $this->getOrCreateTalentProfile($user);
 
         if ($talent->verification_status !== 'verified' || $talent->eligibility_status !== 'eligible') {
-            return redirect()->route('talent.verifikasi')->with(
-                'error',
-                'Anda harus menyelesaikan verifikasi status talenta muda terlebih dahulu sebelum dapat melamar proyek.'
-            );
+            $message = 'Anda harus menyelesaikan verifikasi status talenta muda terlebih dahulu sebelum dapat melamar proyek.';
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message, 'reason' => 'not_verified'], 403);
+            }
+
+            return redirect()->route('talent.verifikasi')->with('error', $message);
         }
 
         $project = Project::findOrFail($id);
-
-        if (! Project::openForTalent()->whereKey($project->id)->exists()) {
-            return redirect()->back()->with(
-                'warning',
-                'Maaf, proyek ini sudah tidak menerima lamaran karena kuota talenta sudah terpenuhi atau proyek telah ditutup.'
-            );
-        }
-
-        $existing = Application::where('user_id', $user->id)->where('project_id', $project->id)->first();
-        if ($existing) {
-            return redirect()->back()->with('warning', 'Anda sudah pernah melamar untuk proyek ini.');
-        }
-
         $message = $request->input('message', 'Saya siap berkontribusi pada proyek ini.');
-
-        Application::create([
-            'user_id' => $user->id,
-            'project_id' => $project->id,
-            'message' => $message,
-            'status' => 'Menunggu',
-        ]);
 
         $matchScore = null;
         if (!empty($talent->assessment_answers)) {
@@ -200,14 +186,10 @@ class TalentController extends Controller
             $matchScore = $match['score'] ?? null;
         }
 
-        ProjectApplication::updateOrCreate(
-            [
-                'project_id' => $project->id,
-                'user_id' => $user->id,
-            ],
-            [
-                'status' => ProjectApplication::STATUS_MENUNGGU,
-                'cover_letter' => $message,
+        // Semua aturan kuota divalidasi ulang di dalam transaksi + row lock (lihat ProjectApplyService).
+        try {
+            $this->applyService->apply($project->id, $user, [
+                'message' => $message,
                 'match_score' => $matchScore,
                 'talent_snapshot' => [
                     'name' => $user->name,
@@ -218,8 +200,18 @@ class TalentController extends Controller
                     'competencies' => $talent->skills ?? [],
                     'portfolios' => $talent->portfolios ?? [],
                 ],
-            ]
-        );
+            ]);
+        } catch (ApplyNotAllowedException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'reason' => $e->reason(),
+                    'apply_status' => $e->applyStatus,
+                ], $e->httpStatus());
+            }
+
+            return redirect()->back()->with('warning', $e->getMessage());
+        }
 
         if ($project->user_id) {
             ProviderNotification::create([
@@ -232,9 +224,24 @@ class TalentController extends Controller
             ]);
         }
 
-        $project->increment('applicants_count');
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Lamaran Anda berhasil dikirim ke penyedia proyek!',
+                'apply_status' => $this->applyService->getApplyStatus($project->fresh(), $user),
+            ], 201);
+        }
 
         return redirect()->route('talent.lamaran')->with('success', 'Lamaran Anda berhasil dikirim ke penyedia proyek!');
+    }
+
+    /**
+     * Status pendaftaran terkini untuk modal detail proyek (di-refetch saat modal dibuka).
+     */
+    public function statusLamaran($id): JsonResponse
+    {
+        $project = Project::findOrFail($id);
+
+        return response()->json($this->applyService->getApplyStatus($project, Auth::user()));
     }
 
     public function lamaranSaya(Request $request): View
@@ -251,12 +258,65 @@ class TalentController extends Controller
 
         $applications = $query->latest()->get();
 
+        // Status sumber utama (project_applications) menentukan lamaran mana yang boleh dibatalkan.
+        $cancellableProjectIds = ProjectApplication::where('user_id', $user->id)
+            ->whereIn('status', ProjectApplication::CANCELLABLE_STATUSES)
+            ->pluck('project_id')
+            ->all();
+
         return view('talent.lamaran', [
             'user' => $user,
             'talent' => $talent,
             'applications' => $applications,
             'currentTab' => $currentTab,
+            'cancellableProjectIds' => $cancellableProjectIds,
+            'cancelStatus' => $this->applyService->getCancelStatus($user),
         ]);
+    }
+
+    /**
+     * Talenta membatalkan lamarannya sendiri (maks. 3 kali per 7 hari). Setelah dibatalkan,
+     * talenta tidak bisa mengajukan lagi ke proyek yang sama.
+     */
+    public function batalkanLamaran(Request $request, $id): RedirectResponse|JsonResponse
+    {
+        $user = Auth::user();
+
+        try {
+            $application = $this->applyService->cancel((int) $id, $user);
+        } catch (CancelNotAllowedException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'reason' => $e->reason,
+                    'cancel_status' => $e->cancelStatus ?: $this->applyService->getCancelStatus($user),
+                ], $e->httpStatus);
+            }
+
+            return redirect()->back()->with('warning', $e->getMessage());
+        }
+
+        $project = Project::withTrashed()->find($application->project_id);
+        if ($project?->user_id) {
+            ProviderNotification::create([
+                'user_id' => $project->user_id,
+                'title' => "Lamaran dibatalkan pada {$project->title}",
+                'message' => "{$user->name} membatalkan lamarannya untuk proyek \"{$project->title}\". Slot pelamar terbuka kembali.",
+                'type' => 'applicant_cancelled',
+                'target_url' => '/penyedia/pelamar',
+                'is_read' => false,
+            ]);
+        }
+
+        $cancelStatus = $this->applyService->getCancelStatus($user);
+        $message = 'Lamaran berhasil dibatalkan. Anda tidak dapat mengajukan lagi ke proyek ini. '
+            . "Sisa pembatalan 7 hari terakhir: {$cancelStatus['remaining']} dari {$cancelStatus['limit']}.";
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message, 'cancel_status' => $cancelStatus]);
+        }
+
+        return redirect()->route('talent.lamaran')->with('success', $message);
     }
 
     public function profil(): View

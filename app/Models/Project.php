@@ -141,6 +141,18 @@ class Project extends Model
             );
     }
 
+    /**
+     * Muat jumlah lamaran aktif & diterima dalam satu query (dipakai ProjectApplyService
+     * untuk halaman daftar agar tidak N+1).
+     */
+    public function scopeWithApplyCounts($query)
+    {
+        return $query->withCount([
+            'applications as active_applications_count' => fn ($q) => $q->whereIn('status', ProjectApplication::ACTIVE_STATUSES),
+            'acceptedApplications',
+        ]);
+    }
+
     public function acceptedCount(): int
     {
         return array_key_exists('accepted_applications_count', $this->attributes)

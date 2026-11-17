@@ -41,7 +41,10 @@ return [
             'busy_timeout' => null,
             'journal_mode' => null,
             'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
+            // IMMEDIATE: transaksi langsung mengambil kunci tulis, padanan SELECT ... FOR UPDATE
+            // (yang diabaikan SQLite). Mencegah race "baca kuota lalu insert" saat apply proyek.
+            // Catatan: Laravel hanya menerapkan opsi ini di PHP >= 8.4.
+            'transaction_mode' => env('DB_SQLITE_TRANSACTION_MODE', 'IMMEDIATE'),
         ],
 
         'mysql' => [
