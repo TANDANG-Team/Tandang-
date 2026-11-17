@@ -92,7 +92,12 @@
                         <td>
                             @if($canCancel)
                                 <form method="POST" action="{{ route('talent.lamar.batal', $app->project_id) }}" style="margin: 0;"
-                                      onsubmit="return confirm('Batalkan lamaran ini? Anda TIDAK dapat mengajukan lagi ke proyek yang sama, dan ini memakai 1 dari {{ $cancelStatus['limit'] }} jatah pembatalan per {{ $cancelStatus['window_days'] }} hari.');">
+                                      data-confirm-title="Batalkan Lamaran?"
+                                      data-confirm="Lamaran ini akan dibatalkan dan Anda tidak dapat mengajukan lagi ke proyek yang sama."
+                                      data-confirm-notice="Ini memakai 1 dari {{ $cancelStatus['limit'] }} jatah pembatalan per {{ $cancelStatus['window_days'] }} hari. Sisa jatah Anda: {{ $cancelStatus['remaining'] }}."
+                                      data-confirm-type="danger"
+                                      data-confirm-btn="Ya, Batalkan Lamaran"
+                                      data-cancel-btn="Kembali">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn btn-secondary btn-sm"

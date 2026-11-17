@@ -55,6 +55,15 @@ if (loginForm && message) {
 if (forgotLink) {
     forgotLink.addEventListener('click', function (event) {
         event.preventDefault();
-        alert('Fitur lupa kata sandi akan segera hadir.');
+        if (typeof window.tandangAlert === 'function') {
+            window.tandangAlert({
+                title: 'Lupa Kata Sandi',
+                message: 'Fitur pemulihan kata sandi otomatis akan segera hadir. Silakan hubungi Administrator jika Anda mengalami kendala saat masuk ke sistem.',
+                type: 'info',
+                buttonText: 'Mengerti'
+            });
+        } else {
+            alert('Fitur lupa kata sandi akan segera hadir.');
+        }
     });
 }

@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/tandang-dialog.css') }}">
     <style>
         .badge-eligible { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 11px; padding: 3px 8px; border-radius: 99px; font-weight: 700; }
         .badge-ineligible { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; font-size: 11px; padding: 3px 8px; border-radius: 99px; font-weight: 700; }
@@ -413,7 +414,11 @@
                         </svg>
                         Tolak
                     </button>
-                    <form id="approveForm" method="POST" style="display: inline;" onsubmit="return confirm('Apakah Anda yakin dokumen ini valid dan menyetujui verifikasi talenta ini?');">
+                    <form id="approveForm" method="POST" style="display: inline;"
+                          data-confirm="Apakah Anda yakin seluruh dokumen talenta ini valid dan ingin menyetujui verifikasi akun ini?"
+                          data-confirm-title="Setujui Verifikasi Talenta?"
+                          data-confirm-type="success"
+                          data-confirm-btn="Ya, Setujui">
                         @csrf
                         <button type="submit" class="btn btn-success">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -542,5 +547,6 @@
             }
         });
     </script>
+    <script src="{{ asset('js/tandang-dialog.js') }}"></script>
 </body>
 </html>

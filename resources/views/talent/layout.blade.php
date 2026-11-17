@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/talent.css') }}">
     <link rel="stylesheet" href="{{ asset('css/tandang-features.css') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('css/tandang-dialog.css') }}">
     @stack('styles')
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
@@ -76,7 +77,11 @@
                     </div>
                 </div>
 
-                <form action="{{ route('logout') }}" method="POST">
+                <form action="{{ route('logout') }}" method="POST"
+                      data-confirm="Apakah Anda yakin ingin keluar dari sesi akun Talenta Muda saat ini?"
+                      data-confirm-title="Keluar dari Akun?"
+                      data-confirm-type="danger"
+                      data-confirm-btn="Ya, Keluar Akun">
                     @csrf
                     <button type="submit" class="btn-logout">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
@@ -120,6 +125,7 @@
         </main>
     </div>
 
+    <script src="{{ asset('js/tandang-dialog.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

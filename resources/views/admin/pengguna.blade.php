@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/tandang-dialog.css') }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
@@ -71,7 +72,11 @@
                     <strong>{{ Auth::user()->name ?? 'Administrator' }}</strong>
                     <small>{{ Auth::user()->email ?? 'admin@tandang.id' }}</small>
                 </div>
-                <form action="{{ route('logout') }}" method="POST" style="margin-left: auto;">
+                <form action="{{ route('logout') }}" method="POST" style="margin-left: auto;"
+                      data-confirm="Apakah Anda yakin ingin keluar dari sesi Administrator?"
+                      data-confirm-title="Keluar dari Admin Panel?"
+                      data-confirm-type="danger"
+                      data-confirm-btn="Ya, Keluar">
                     @csrf
                     <button type="submit" title="Keluar / Logout" style="border: 0; background: transparent; color: #94a3b8; cursor: pointer; display: flex; align-items: center; padding: 6px; border-radius: 6px; transition: all 0.15s ease;" onmouseover="this.style.color='#ef4444'; this.style.background='#fee2e2';" onmouseout="this.style.color='#94a3b8'; this.style.background='transparent';">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -244,24 +249,26 @@
 
                                                 <!-- Toggle Active State (Lock/Unlock) -->
                                                 @if($user->id !== Auth::id())
-                                                    <form action="{{ route('admin.pengguna.toggle', $user->id) }}" method="POST" style="display:inline;">
-                                                        @csrf
-                                                        <button type="submit" 
-                                                                class="{{ $user->is_active ? 'danger-link' : '' }}"
-                                                                title="{{ $user->is_active ? 'Nonaktifkan Akun' : 'Aktifkan Akun' }}"
-                                                                onclick="return confirm('Apakah Anda yakin ingin {{ $user->is_active ? 'menonaktifkan' : 'mengaktifkan' }} akun {{ $user->name }}?')">
-                                                            @if($user->is_active)
-                                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-                                                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                                                                </svg>
-                                                            @else
-                                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                    <polyline points="20 6 9 17 4 12"/>
-                                                                </svg>
-                                                            @endif
-                                                        </button>
-                                                    </form>
+                                                    <button type="button" 
+                                                            class="{{ $user->is_active ? 'danger-link' : '' }}"
+                                                            title="{{ $user->is_active ? 'Nonaktifkan Akun' : 'Aktifkan Akun' }}"
+                                                            onclick="openConfirmToggleModal({{ json_encode([
+                                                                'id' => $user->id,
+                                                                'name' => $user->name,
+                                                                'is_active' => (bool)$user->is_active,
+                                                                'toggle_url' => route('admin.pengguna.toggle', $user->id),
+                                                            ]) }})">
+                                                        @if($user->is_active)
+                                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                                                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                                            </svg>
+                                                        @else
+                                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <polyline points="20 6 9 17 4 12"/>
+                                                            </svg>
+                                                        @endif
+                                                    </button>
                                                 @endif
                                             </div>
                                         </td>
@@ -353,9 +360,53 @@
         </div>
     </div>
 
+    <!-- Modal Konfirmasi Status Pengguna (Aktifkan / Nonaktifkan) -->
+    <div id="confirmToggleModal" class="modal-backdrop">
+        <div class="modal-box confirm-modal-box">
+            <div class="confirm-icon-wrap danger" id="confirmToggleIconWrap">
+                <!-- Icon Lock / Danger (Nonaktifkan) -->
+                <svg id="confirmToggleIconDanger" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <!-- Icon Check / Unlock / Success (Aktifkan) -->
+                <svg id="confirmToggleIconSuccess" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+            </div>
+
+            <div class="confirm-content">
+                <h3 id="confirmToggleTitle" class="confirm-title">Nonaktifkan Akun Pengguna?</h3>
+                <p id="confirmToggleDesc" class="confirm-desc">
+                    Apakah Anda yakin ingin menonaktifkan akun <strong id="confirmToggleUserName">Nama Pengguna</strong>?
+                </p>
+                <div id="confirmToggleNotice" class="confirm-notice">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span id="confirmToggleNoticeText">Pengguna tidak akan dapat masuk ke sistem sampai akun diaktifkan kembali.</span>
+                </div>
+            </div>
+
+            <form id="confirmToggleForm" method="POST" action="">
+                @csrf
+                <div class="confirm-modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeConfirmToggleModal()">Batal</button>
+                    <button type="submit" id="confirmToggleSubmitBtn" class="btn btn-danger">
+                        <span id="confirmToggleSubmitText">Ya, Nonaktifkan</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         const userDetailModal = document.getElementById('userDetailModal');
         const editUserModal = document.getElementById('editUserModal');
+        const confirmToggleModal = document.getElementById('confirmToggleModal');
 
         function openUserDetailModal(data) {
             document.getElementById('detailAvatar').innerText = data.name.charAt(0).toUpperCase();
@@ -387,10 +438,56 @@
             editUserModal.classList.remove('show');
         }
 
+        function openConfirmToggleModal(data) {
+            const iconWrap = document.getElementById('confirmToggleIconWrap');
+            const iconDanger = document.getElementById('confirmToggleIconDanger');
+            const iconSuccess = document.getElementById('confirmToggleIconSuccess');
+            const title = document.getElementById('confirmToggleTitle');
+            const userName = document.getElementById('confirmToggleUserName');
+            const noticeText = document.getElementById('confirmToggleNoticeText');
+            const submitBtn = document.getElementById('confirmToggleSubmitBtn');
+            const submitText = document.getElementById('confirmToggleSubmitText');
+            const form = document.getElementById('confirmToggleForm');
+
+            userName.innerText = data.name;
+            form.action = data.toggle_url;
+
+            if (data.is_active) {
+                // Konfirmasi Menonaktifkan Akun
+                iconWrap.className = 'confirm-icon-wrap danger';
+                iconDanger.style.display = 'block';
+                iconSuccess.style.display = 'none';
+
+                title.innerText = 'Nonaktifkan Akun?';
+                noticeText.innerText = 'Pengguna tidak akan dapat masuk ke sistem sampai akun diaktifkan kembali oleh Administrator.';
+
+                submitBtn.className = 'btn btn-danger';
+                submitText.innerText = 'Ya, Nonaktifkan';
+            } else {
+                // Konfirmasi Mengaktifkan Akun
+                iconWrap.className = 'confirm-icon-wrap success';
+                iconDanger.style.display = 'none';
+                iconSuccess.style.display = 'block';
+
+                title.innerText = 'Aktifkan Akun?';
+                noticeText.innerText = 'Pengguna akan dapat kembali masuk dan menggunakan semua fitur di sistem Tandang.';
+
+                submitBtn.className = 'btn btn-success';
+                submitText.innerText = 'Ya, Aktifkan';
+            }
+
+            confirmToggleModal.classList.add('show');
+        }
+
+        function closeConfirmToggleModal() {
+            confirmToggleModal.classList.remove('show');
+        }
+
         // Close on backdrop click
         window.addEventListener('click', function(e) {
             if (e.target === userDetailModal) closeUserDetailModal();
             if (e.target === editUserModal) closeEditUserModal();
+            if (e.target === confirmToggleModal) closeConfirmToggleModal();
         });
 
         // Close on ESC
@@ -398,9 +495,11 @@
             if (e.key === 'Escape') {
                 closeUserDetailModal();
                 closeEditUserModal();
+                closeConfirmToggleModal();
             }
         });
     </script>
+    <script src="{{ asset('js/tandang-dialog.js') }}"></script>
 </body>
 </html>
 

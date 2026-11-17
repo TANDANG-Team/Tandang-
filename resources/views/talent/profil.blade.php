@@ -145,7 +145,12 @@
                                     <button type="button" onclick="document.getElementById('pf-edit-{{ $loop->index }}').toggleAttribute('hidden')" style="background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 4px;" title="Edit">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                                     </button>
-                                    <form method="POST" action="{{ route('talent.profil.hapus-portofolio', $item['id']) }}" onsubmit="return confirm('Hapus item portofolio ini?')" style="margin: 0;">
+                                    <form method="POST" action="{{ route('talent.profil.hapus-portofolio', $item['id']) }}"
+                                          data-confirm="Apakah Anda yakin ingin menghapus item portofolio <strong>{{ e($item['title'] ?? 'ini') }}</strong> dari profil Anda?"
+                                          data-confirm-title="Hapus Portofolio?"
+                                          data-confirm-type="danger"
+                                          data-confirm-btn="Ya, Hapus"
+                                          style="margin: 0;">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" style="background: transparent; border: none; color: var(--danger); cursor: pointer; padding: 4px;" title="Hapus">

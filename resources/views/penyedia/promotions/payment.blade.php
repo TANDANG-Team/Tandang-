@@ -157,7 +157,12 @@
         @endif
 
         @if($state === 'pending')
-            <form method="POST" action="{{ route('penyedia.promotions.cancel', $promotion) }}" onsubmit="return confirm('Batalkan checkout promosi ini?');">
+            <form method="POST" action="{{ route('penyedia.promotions.cancel', $promotion) }}"
+                  data-confirm-title="Batalkan Checkout?"
+                  data-confirm="Checkout promosi ini akan dibatalkan. Anda bisa membuat checkout baru kapan saja."
+                  data-confirm-type="danger"
+                  data-confirm-btn="Ya, Batalkan"
+                  data-cancel-btn="Kembali">
                 @csrf
                 <button type="submit" class="tdg-btn danger sm">Batalkan checkout</button>
             </form>
