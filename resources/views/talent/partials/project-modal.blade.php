@@ -278,6 +278,16 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+// Seluruh kartu proyek bisa diklik untuk membuka detail. Klik diteruskan ke tombol "Lihat Detail"
+// di kartu itu agar perilakunya sama persis (termasuk tracking klik Sponsored Project).
+document.addEventListener('click', function(e) {
+    const card = e.target.closest('.js-detail-card');
+    if (!card || e.target.closest('a, button, input, select, textarea, label')) return;
+    if (window.getSelection && String(window.getSelection()).length > 0) return; // pengguna sedang menyeleksi teks
+    const trigger = card.querySelector('.js-detail-trigger');
+    if (trigger) trigger.click();
+});
+
 // Cegah klik ganda mengirim dua request.
 document.getElementById('applyForm').addEventListener('submit', function() {
     document.getElementById('applySubmit').disabled = true;

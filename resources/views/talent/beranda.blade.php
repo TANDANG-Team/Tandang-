@@ -30,28 +30,64 @@
     </article>
 
     <!-- Card 2: Status Verifikasi -->
-    <article class="dash-card">
+    {{-- verification_status di DB berbahasa Inggris (verified/pending/rejected/...); pakai label agar data lama berbahasa Indonesia ikut terbaca. --}}
+    @php
+        $verifLabel = $talent->verification_status_label;
+        $verif = match ($verifLabel) {
+            'Terverifikasi' => [
+                'tone' => 'success', 'badge' => 'badge-success',
+                'text' => 'Akunmu sudah diverifikasi admin. Kamu bisa melamar proyek.',
+                'cta' => 'Lihat Detail Verifikasi',
+            ],
+            'Menunggu Verifikasi' => [
+                'tone' => 'warning', 'badge' => 'badge-warning',
+                'text' => 'Dokumen sedang ditinjau admin. Kamu bisa melamar setelah terverifikasi.',
+                'cta' => 'Cek Status Verifikasi',
+            ],
+            'Ditolak', 'Kedaluwarsa' => [
+                'tone' => 'danger', 'badge' => 'badge-danger',
+                'text' => $verifLabel === 'Ditolak'
+                    ? 'Dokumen verifikasi ditolak. Perbaiki dan unggah ulang dokumenmu.'
+                    : 'Masa verifikasi berakhir. Unggah dokumen terbaru untuk verifikasi ulang.',
+                'cta' => 'Perbaiki Verifikasi',
+            ],
+            default => [
+                'tone' => 'neutral', 'badge' => 'badge-info',
+                'text' => 'Unggah bukti pelajar/mahasiswa/alumni untuk verifikasi.',
+                'cta' => 'Mulai Verifikasi',
+            ],
+        };
+    @endphp
+    <article class="dash-card verif-card is-{{ $verif['tone'] }}">
         <div>
-            <span class="badge 
-                {{ $talent->verification_status === 'Terverifikasi' ? 'badge-success' : ($talent->verification_status === 'Ditolak' ? 'badge-danger' : 'badge-warning') }}" 
-                style="margin-bottom: 8px;">
-                Status Akun
-            </span>
-            <h3>{{ $talent->verification_status }}</h3>
-            <p>
-                @if($talent->verification_status === 'Terverifikasi')
-                    Akun talenta telah diverifikasi oleh tim admin.
-                @elseif($talent->verification_status === 'Menunggu Verifikasi')
-                    Dokumen sedang dalam proses peninjauan admin.
-                @elseif($talent->verification_status === 'Ditolak')
-                    Dokumen verifikasi ditolak. Klik untuk perbaiki.
-                @else
-                    Unggah bukti mahasiswa/alumni untuk verifikasi.
-                @endif
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                <div>
+                    <span class="badge {{ $verif['badge'] }}" style="margin-bottom: 8px;">Status Akun</span>
+                    <h3>{{ $verifLabel }}</h3>
+                </div>
+                <span class="verif-icon" aria-hidden="true">
+                    @switch($verif['tone'])
+                        @case('success')
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            @break
+                        @case('warning')
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            @break
+                        @case('danger')
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                            @break
+                        @default
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    @endswitch
+                </span>
+            </div>
+            <p>{{ $verif['text'] }}</p>
+            @if($verif['tone'] === 'success' && $talent->verified_at)
+                <p class="verif-meta">Diverifikasi {{ $talent->verified_at->translatedFormat('d M Y') }}</p>
+            @endif
         </div>
-        <a href="{{ route('talent.verifikasi') }}" class="btn btn-secondary btn-sm" style="align-self: flex-start; margin-top: 14px;">
-            Kelola Verifikasi &rarr;
+        <a href="{{ route('talent.verifikasi') }}" class="btn {{ $verif['tone'] === 'success' ? 'btn-secondary' : 'btn-primary' }} btn-sm" style="align-self: flex-start; margin-top: 14px;">
+            {{ $verif['cta'] }} &rarr;
         </a>
     </article>
 
@@ -96,59 +132,7 @@
 @if($topRecommendations->count() > 0)
     <div class="project-grid">
         @foreach($topRecommendations as $p)
-            @php
-                $applyStatus = $applyStatuses[$p->id] ?? null;
-                $scoreClass = $p->match_score >= 80 ? 'high' : ($p->match_score >= 60 ? 'medium' : 'low');
-            @endphp
-            <article class="project-card has-cover">
-                <div>
-                    <div class="project-cover"><img src="{{ $p->cover_url }}" alt="" loading="lazy"></div>
-                    <div class="project-card-top">
-                        <span class="provider">{{ $p->provider_name }}</span>
-                        <span class="match-score-badge {{ $scoreClass }}">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
-                            {{ $p->match_score }}% Cocok
-                        </span>
-                    </div>
-
-                    <h3>{{ $p->title }}</h3>
-                    <p class="desc">{{ $p->description }}</p>
-
-                    <div class="project-meta-pills">
-                        <span class="meta-pill">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                            {{ $p->location }} ({{ $p->work_type }})
-                        </span>
-                        <span class="meta-pill">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            {{ $p->schedule }}
-                        </span>
-                        <span class="meta-pill">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            Butuh {{ $applyStatus['talents_needed'] ?? $p->talents_needed }} talenta
-                        </span>
-                        @include('talent.partials.apply-status-pill')
-                    </div>
-
-                    <div class="skill-tags">
-                        @foreach($p->skills ?? [] as $sk)
-                            @php
-                                $isMatched = in_array($sk, $p->match_data['matched_skills'] ?? []);
-                            @endphp
-                            <span class="skill-tag {{ $isMatched ? 'matched' : '' }}">
-                                {{ $sk }} {{ $isMatched ? '✓' : '' }}
-                            </span>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="project-card-footer">
-                    <span class="comp">{{ $p->compensation ?: 'Sesuai Kesepakatan' }}</span>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="openDetailModal({{ json_encode($p) }}, {{ json_encode($applyStatus) }})">
-                        {{ ($applyStatus['can_apply'] ?? true) ? 'Lihat Detail & Lamar' : 'Lihat Detail' }} &rarr;
-                    </button>
-                </div>
-            </article>
+            @include('talent.partials.project-card', ['applyStatus' => $applyStatuses[$p->id] ?? null])
         @endforeach
     </div>
 @else

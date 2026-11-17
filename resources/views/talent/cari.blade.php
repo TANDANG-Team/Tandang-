@@ -51,76 +51,7 @@
 @if($projects->count() > 0)
     <div class="project-grid">
         @foreach($projects as $p)
-            @php
-                $applyStatus = $applyStatuses[$p->id] ?? null;
-                $scoreClass = $p->match_score >= 80 ? 'high' : ($p->match_score >= 60 ? 'medium' : 'low');
-            @endphp
-            <article class="project-card has-cover {{ $p->promotion_id ? 'is-sponsored' : '' }}"
-                @if($p->promotion_id) data-promo-id="{{ $p->promotion_id }}" data-placement="list" @endif>
-                <div>
-                    <div class="project-cover">
-                        <img src="{{ $p->cover_url }}" alt="" loading="lazy">
-                        @if($p->promotion_id)
-                            <span class="tdg-pill sponsor">
-                                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.52l-5.88 3.09 1.12-6.55L2.48 9.42l6.58-.96z"/></svg>
-                                Dipromosikan
-                            </span>
-                        @endif
-                    </div>
-
-                    <div class="project-card-top">
-                        <span class="provider">{{ $p->provider_name }}</span>
-                        <span class="match-score-badge {{ $scoreClass }}">
-                            {{ $p->match_score }}% Cocok
-                        </span>
-                    </div>
-
-                    <h3>{{ $p->title }}</h3>
-                    @if($p->provider_rating !== null)
-                        <div class="tdg-rating-inline" style="margin:-2px 0 8px;">
-                            @include('partials.stars', ['score' => $p->provider_rating])
-                            {{ number_format($p->provider_rating, 1, ',', '') }} / 5
-                            <span class="count">({{ $p->provider_rating_count }} penilaian)</span>
-                        </div>
-                    @else
-                        <div class="tdg-rating-inline" style="margin:-2px 0 8px;"><span class="count">Belum Ada Penilaian</span></div>
-                    @endif
-                    <p class="desc">{{ $p->description }}</p>
-
-                    <div class="project-meta-pills">
-                        <span class="meta-pill">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                            {{ $p->location }} ({{ $p->work_type }})
-                        </span>
-                        <span class="meta-pill">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            {{ $p->schedule }}
-                        </span>
-                        <span class="meta-pill">
-                            Butuh {{ $applyStatus['talents_needed'] ?? $p->talents_needed }} talenta
-                        </span>
-                        @include('talent.partials.apply-status-pill')
-                    </div>
-
-                    <div class="skill-tags">
-                        @foreach($p->skills ?? [] as $sk)
-                            @php
-                                $isMatched = in_array($sk, $p->match_data['matched_skills'] ?? []);
-                            @endphp
-                            <span class="skill-tag {{ $isMatched ? 'matched' : '' }}">
-                                {{ $sk }} {{ $isMatched ? '✓' : '' }}
-                            </span>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="project-card-footer">
-                    <span class="comp">{{ $p->compensation ?: 'Sesuai Kesepakatan' }}</span>
-                    <button type="button" class="btn btn-secondary btn-sm {{ $p->promotion_id ? 'js-promo-cta' : '' }}" onclick="openDetailModal({{ json_encode($p) }}, {{ json_encode($applyStatus) }})">
-                        {{ ($applyStatus['can_apply'] ?? true) ? 'Lihat Detail & Lamar' : 'Lihat Detail' }} &rarr;
-                    </button>
-                </div>
-            </article>
+            @include('talent.partials.project-card', ['applyStatus' => $applyStatuses[$p->id] ?? null, 'showRating' => true])
         @endforeach
     </div>
 @elseif(! $featuredProject)

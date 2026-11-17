@@ -367,6 +367,56 @@ body {
     margin-top: 4px;
 }
 
+/* Kartu Status Akun di beranda: warna mengikuti status verifikasi */
+.verif-card {
+    border-left-width: 4px;
+}
+
+.verif-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.verif-card .verif-meta {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.verif-card.is-success {
+    background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);
+    border-color: #a7f3d0;
+    border-left-color: var(--success);
+}
+.verif-card.is-success h3 { color: #047857; }
+.verif-card.is-success .verif-icon { background: var(--success-light); color: #059669; }
+.verif-card.is-success .verif-meta { color: #047857; }
+
+.verif-card.is-warning {
+    background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+    border-color: #fde68a;
+    border-left-color: #f59e0b;
+}
+.verif-card.is-warning h3 { color: #b45309; }
+.verif-card.is-warning .verif-icon { background: var(--amber-light); color: #d97706; }
+
+.verif-card.is-danger {
+    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+    border-color: #fecaca;
+    border-left-color: #ef4444;
+}
+.verif-card.is-danger h3 { color: #b91c1c; }
+.verif-card.is-danger .verif-icon { background: var(--danger-light); color: #dc2626; }
+
+.verif-card.is-neutral {
+    border-left-color: var(--line);
+}
+.verif-card.is-neutral .verif-icon { background: #f1f5f9; color: var(--muted); }
+
 .progress-bar-bg {
     width: 100%;
     height: 8px;
@@ -455,6 +505,19 @@ body {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
     border-color: #cbd5e1;
+}
+
+/* Kartu yang seluruh areanya membuka modal detail proyek */
+.js-detail-card {
+    cursor: pointer;
+}
+
+.project-card.js-detail-card:hover {
+    border-color: var(--teal);
+}
+
+.project-card.js-detail-card:hover h3 {
+    color: var(--teal-dark);
 }
 
 .project-card-top {
@@ -546,6 +609,185 @@ body {
     font-size: 13.5px;
     font-weight: 700;
     color: var(--navy);
+}
+
+/* ===== Kartu proyek Talenta (talent/partials/project-card) ===== */
+.pcard .project-cover {
+    aspect-ratio: 16 / 7;
+    margin-bottom: 18px;
+}
+
+.pcard-score {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 5px 11px;
+    font-size: 12.5px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.pcard-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.pcard-provider {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--teal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pcard .pcard-title {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--navy);
+    margin: 4px 0 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.pcard-rating {
+    margin-bottom: 6px;
+}
+
+.pcard-desc {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.pcard-meta {
+    list-style: none;
+    margin: 0 0 14px;
+    padding: 0;
+    display: grid;
+    gap: 7px;
+    font-size: 13px;
+    color: #475569;
+}
+
+.pcard-meta li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.pcard-meta svg {
+    flex-shrink: 0;
+    color: #94a3b8;
+}
+
+.pcard-dot {
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.pcard-reason {
+    align-self: flex-start;
+    margin: -4px 0 14px;
+}
+
+.pcard-breakdown {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+    display: grid;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.pcard-breakdown div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pcard-breakdown dt {
+    color: var(--muted);
+}
+
+.pcard-breakdown dd {
+    margin: 0;
+    font-weight: 600;
+    color: var(--navy);
+    text-align: right;
+}
+
+.pcard-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.pcard-skills .skill-tag {
+    font-size: 11.5px;
+    padding: 3px 9px;
+    border-radius: 99px;
+}
+
+.pcard-more {
+    background: transparent;
+    color: var(--muted);
+}
+
+.pcard-footer {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+    display: grid;
+    gap: 14px;
+}
+
+.pcard-comp small {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 2px;
+}
+
+.pcard-comp strong {
+    display: block;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--teal-dark);
+    font-variant-numeric: tabular-nums;
+}
+
+.pcard-cta {
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 18px;
+    font-size: 14.5px;
+    font-weight: 700;
+    border-radius: 11px;
+}
+
+.pcard-cta svg {
+    transition: transform 0.2s;
+}
+
+.pcard:hover .pcard-cta svg {
+    transform: translateX(3px);
 }
 
 /* Tabs */

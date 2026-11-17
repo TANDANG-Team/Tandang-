@@ -9,7 +9,7 @@
     $applyStatus = $applyStatus ?? null;
     $initial = strtoupper(mb_substr($project->provider_name ?: 'T', 0, 1));
 @endphp
-<article class="sponsored-feature"
+<article class="sponsored-feature {{ $preview ? '' : 'js-detail-card' }}"
     @unless($preview)
         data-promo-id="{{ $project->promotion_id }}" data-placement="banner"
     @endunless
@@ -61,7 +61,7 @@
             @if($preview)
                 <span class="tdg-btn primary" aria-disabled="true">Lihat Detail Proyek &rarr;</span>
             @else
-                <button type="button" class="tdg-btn primary js-promo-cta"
+                <button type="button" class="tdg-btn primary js-promo-cta js-detail-trigger"
                         onclick='openDetailModal(@json($project), @json($applyStatus))'>
                     Lihat Detail Proyek &rarr;
                 </button>

@@ -26,7 +26,7 @@
         .ws-choice.is-mid { align-items: flex-start; text-align: left; }
     }
     .cover-field { display:grid; grid-template-columns: 240px minmax(0,1fr); gap:20px; align-items:center; margin-bottom:22px; padding-bottom:22px; border-bottom:1px solid #f3f4f6; }
-    .cover-preview { aspect-ratio:16/9; border-radius:12px; overflow:hidden; background:#e7f7f4; border:1px solid #e5e7eb; }
+    .cover-preview { aspect-ratio:16/7; border-radius:12px; overflow:hidden; background:#e7f7f4; border:1px solid #e5e7eb; }
     .cover-preview img { width:100%; height:100%; object-fit:cover; display:block; }
     @media (max-width: 640px) { .cover-field { grid-template-columns: 1fr; } }
 </style>
@@ -133,7 +133,7 @@
             </div>
             <div class="cover-meta">
                 <label for="cover_image" style="display:block; font-size:13.5px; font-weight:600; color:#374151; margin-bottom:4px;">Gambar Sampul <span style="font-weight:500; color:#9ca3af;">(opsional)</span></label>
-                <p style="margin:0 0 10px; font-size:12.5px; color:#6b7280; line-height:1.5;">JPG, PNG, atau WEBP, maks. 2 MB, rasio 16:9 disarankan. Tanpa gambar, TANDANG memakai ilustrasi sesuai kategori.</p>
+                <p style="margin:0 0 10px; font-size:12.5px; color:#6b7280; line-height:1.5;">JPG, PNG, atau WEBP, maks. 2 MB. Disarankan gambar lebar (misalnya 1600×700 px) dengan objek utama di tengah, karena pratinjau ini sama dengan tampilan di kartu proyek. Tanpa gambar, TANDANG memakai ilustrasi sesuai kategori.</p>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                     <label for="cover_image" class="btn-secondary-action" style="cursor:pointer;">Pilih Gambar</label>
                     <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/webp" style="position:absolute; width:1px; height:1px; opacity:0;">

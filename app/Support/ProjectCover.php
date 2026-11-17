@@ -37,19 +37,22 @@ class ProjectCover
         $icon    = self::ICONS[self::iconFor($key)];
         [$dark, $light, $accent] = $palette;
 
+        // Komposisi 16:7 (rasio kartu proyek) dengan isi di tengah: di rasio lain (modal, thumbnail,
+        // banner Sponsored) yang terpotong hanya pinggiran latar, ikon tetap utuh dan tidak ter-zoom berlebihan.
         $svg = <<<SVG
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" preserveAspectRatio="xMidYMid slice">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="{$dark}"/><stop offset="1" stop-color="{$light}"/>
     </linearGradient>
   </defs>
-  <rect width="640" height="360" fill="url(#g)"/>
-  <circle cx="560" cy="40" r="150" fill="#ffffff" fill-opacity=".08"/>
-  <circle cx="80" cy="340" r="120" fill="#ffffff" fill-opacity=".06"/>
-  <rect x="420" y="210" width="190" height="16" rx="8" fill="{$accent}" fill-opacity=".9"/>
-  <rect x="460" y="240" width="150" height="16" rx="8" fill="#ffffff" fill-opacity=".35"/>
-  <g transform="translate(250 110) scale(2)" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".95">{$icon}</g>
+  <rect width="640" height="280" fill="url(#g)"/>
+  <circle cx="548" cy="44" r="96" fill="#ffffff" fill-opacity=".07"/>
+  <circle cx="92" cy="246" r="80" fill="#ffffff" fill-opacity=".05"/>
+  <circle cx="404" cy="86" r="5" fill="{$accent}"/>
+  <circle cx="236" cy="198" r="3.5" fill="#ffffff" fill-opacity=".45"/>
+  <rect x="268" y="88" width="104" height="104" rx="26" fill="#ffffff" fill-opacity=".14" stroke="#ffffff" stroke-opacity=".28" stroke-width="1.5"/>
+  <g transform="translate(266 83) scale(1.5)" fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">{$icon}</g>
 </svg>
 SVG;
 
