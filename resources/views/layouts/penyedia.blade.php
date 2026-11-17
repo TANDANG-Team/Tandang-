@@ -456,6 +456,7 @@
             color: #991b1b;
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/tandang-features.css') }}?v=2">
     @stack('styles')
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
@@ -536,6 +537,33 @@
                     @endif
                 </a>
 
+                <a href="{{ route('penyedia.promotions.index') }}" class="nav-link-item {{ request()->routeIs('penyedia.promotions.*') ? 'active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
+                    </svg>
+                    <span>Promosi Proyek</span>
+                    @php
+                        $livePromoCount = \App\Models\ProjectPromotion::where('user_id', auth()->id())->live()->count();
+                    @endphp
+                    @if($livePromoCount > 0)
+                        <span class="nav-badge-pill" style="background:#0fa48f;" title="Promosi sedang tayang">{{ $livePromoCount }}</span>
+                    @endif
+                </a>
+
+                <a href="{{ route('penyedia.engagements.index') }}" class="nav-link-item {{ request()->routeIs('penyedia.engagements.*') || request()->routeIs('penyedia.talents.*') ? 'active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.52l-5.88 3.09 1.12-6.55L2.48 9.42l6.58-.96z"/>
+                    </svg>
+                    <span>Penilaian Talenta</span>
+                    @php
+                        $workToConfirm = \App\Models\ProjectWorkCompletion::where('provider_id', auth()->id())
+                            ->where('status', 'pending_confirmation')->where('requested_by', '!=', auth()->id())->count();
+                    @endphp
+                    @if($workToConfirm > 0)
+                        <span class="nav-badge-pill" style="background:#f59e0b;" title="Menunggu konfirmasimu">{{ $workToConfirm }}</span>
+                    @endif
+                </a>
+
                 <a href="{{ route('penyedia.settings') }}" class="nav-link-item {{ request()->routeIs('penyedia.settings*') ? 'active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"/>
@@ -603,6 +631,20 @@
                 <div class="alert-box alert-info">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                     <span>{{ session('info') }}</span>
+                </div>
+            @endif
+
+            @if(session('warning'))
+                <div class="alert-box alert-info" style="background:#fff8eb; border-color:#ffe2ad; color:#8a5300;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>{{ session('warning') }}</span>
+                </div>
+            @endif
+
+            @if(isset($errors) && $errors->any() && ! request()->routeIs('penyedia.projects.*', 'penyedia.profile*', 'penyedia.settings*'))
+                <div class="alert-box alert-error" role="alert">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>{{ $errors->first() }}</span>
                 </div>
             @endif
 

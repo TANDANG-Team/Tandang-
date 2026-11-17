@@ -25,10 +25,27 @@
         .ws-choices { grid-template-columns: 1fr; }
         .ws-choice.is-mid { align-items: flex-start; text-align: left; }
     }
+    .cover-field { display:grid; grid-template-columns: 240px minmax(0,1fr); gap:20px; align-items:center; margin-bottom:22px; padding-bottom:22px; border-bottom:1px solid #f3f4f6; }
+    .cover-preview { aspect-ratio:16/9; border-radius:12px; overflow:hidden; background:#e7f7f4; border:1px solid #e5e7eb; }
+    .cover-preview img { width:100%; height:100%; object-fit:cover; display:block; }
+    @media (max-width: 640px) { .cover-field { grid-template-columns: 1fr; } }
 </style>
 @endpush
 
 @push('scripts')
+<script>
+(function () {
+    const input = document.getElementById('cover_image');
+    if (!input) return;
+    input.addEventListener('change', () => {
+        const file = input.files && input.files[0];
+        document.getElementById('coverFileName').textContent = file ? file.name : '';
+        if (file && file.type.startsWith('image/')) {
+            document.getElementById('coverPreview').src = URL.createObjectURL(file);
+        }
+    });
+})();
+</script>
 <script>
 (function () {
     // Kategori: tampilkan kolom ketik sendiri saat memilih "Lainnya"
@@ -93,7 +110,7 @@
     </div>
 @endif
 
-<form method="POST" action="{{ $isEdit ? route('penyedia.projects.update', $project) : route('penyedia.projects.store') }}">
+<form method="POST" action="{{ $isEdit ? route('penyedia.projects.update', $project) : route('penyedia.projects.store') }}" enctype="multipart/form-data">
     @csrf
     @if($isEdit)
         @method('PUT')
@@ -106,6 +123,28 @@
             <div>
                 <h2 style="font-size: 17px; font-weight: 700; color: #111827; margin: 0 0 2px;">Informasi Dasar</h2>
                 <p style="margin: 0; font-size: 13px; color: #6b7280;">Identitas utama proyek yang akan dilihat talenta.</p>
+            </div>
+        </div>
+
+        {{-- Gambar sampul proyek --}}
+        <div class="cover-field">
+            <div class="cover-preview">
+                <img id="coverPreview" src="{{ $project->exists ? $project->cover_url : \App\Support\ProjectCover::fallback(old('category', 'Kreatif')) }}" alt="Pratinjau gambar sampul proyek">
+            </div>
+            <div class="cover-meta">
+                <label for="cover_image" style="display:block; font-size:13.5px; font-weight:600; color:#374151; margin-bottom:4px;">Gambar Sampul <span style="font-weight:500; color:#9ca3af;">(opsional)</span></label>
+                <p style="margin:0 0 10px; font-size:12.5px; color:#6b7280; line-height:1.5;">JPG, PNG, atau WEBP, maks. 2 MB, rasio 16:9 disarankan. Tanpa gambar, TANDANG memakai ilustrasi sesuai kategori.</p>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <label for="cover_image" class="btn-secondary-action" style="cursor:pointer;">Pilih Gambar</label>
+                    <input type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/webp" style="position:absolute; width:1px; height:1px; opacity:0;">
+                    @if($project->cover_image)
+                        <label style="display:inline-flex; gap:6px; align-items:center; font-size:12.5px; color:#b91c1c;">
+                            <input type="checkbox" name="remove_cover" value="1"> Hapus gambar
+                        </label>
+                    @endif
+                    <span id="coverFileName" style="font-size:12px; color:#6b7280;"></span>
+                </div>
+                @error('cover_image')<div style="color:#dc2626; font-size:12.5px; margin-top:6px;">{{ $message }}</div>@enderror
             </div>
         </div>
 

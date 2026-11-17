@@ -28,8 +28,9 @@
                 $scoreClass = $p->match_score >= 80 ? 'high' : ($p->match_score >= 60 ? 'medium' : 'low');
                 $components = $p->match_data['components'] ?? [];
             @endphp
-            <article class="project-card">
+            <article class="project-card has-cover">
                 <div>
+                    <div class="project-cover"><img src="{{ $p->cover_url }}" alt="" loading="lazy"></div>
                     <div class="project-card-top">
                         <span class="provider">{{ $p->provider_name }}</span>
                         <span class="match-score-badge {{ $scoreClass }}">

@@ -96,6 +96,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get promotions created by this penyedia.
+     */
+    public function projectPromotions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProjectPromotion::class, 'user_id');
+    }
+
+    /**
      * Get provider notifications for this user.
      */
     public function providerNotifications(): \Illuminate\Database\Eloquent\Relations\HasMany

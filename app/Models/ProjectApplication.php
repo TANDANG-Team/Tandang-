@@ -34,8 +34,28 @@ class ProjectApplication extends Model
         static::saved(function (ProjectApplication $application) {
             if ($application->wasRecentlyCreated || $application->wasChanged('status')) {
                 $application->syncTalentApplication();
+
+                if ($application->status === self::STATUS_DITERIMA) {
+                    // Keterlibatan proyek dimulai → buat catatan status pengerjaan terpisah.
+                    app(\App\Services\Rating\WorkCompletionService::class)->ensureFor($application);
+
+                    // Kuota bisa penuh karena penerimaan ini → hentikan promosi yang tidak lagi layak.
+                    if ($application->project) {
+                        app(\App\Services\PromotionService::class)->stopIneligibleForProject($application->project);
+                    }
+                }
             }
         });
+    }
+
+    public function workCompletion(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ProjectWorkCompletion::class, 'project_application_id');
+    }
+
+    public function promotionAttribution(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PromotionAttribution::class, 'project_application_id');
     }
 
     public function syncTalentApplication(): void

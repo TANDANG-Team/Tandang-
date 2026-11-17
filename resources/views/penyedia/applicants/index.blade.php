@@ -113,6 +113,7 @@
                     : null;
                 $matchScore = $app->match_score;
                 $initial = strtoupper(substr($talentName, 0, 1));
+                $tr = $talentRatings[$app->user_id] ?? null;
             @endphp
             <div style="background: #ffffff; border: 1px solid #e9edf2; border-radius: 14px; padding: 22px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                 <!-- Profile & Project Info -->
@@ -132,6 +133,9 @@
                         </div>
                         <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">
                             <strong>{{ $category }}</strong> &bull; {{ $institution }}
+                        </div>
+                        <div style="margin-top: 4px;" data-talent-rating="{{ $app->user_id }}">
+                            @include('partials.rating-badge', ['average' => $tr['average'] ?? null, 'count' => $tr['count'] ?? 0])
                         </div>
                         <div style="font-size: 12.5px; color: #4b5563; margin-top: 3px;">
                             Melamar pada: <strong style="color: #1f2a37;">{{ $app->project->title ?? '-' }}</strong> &bull; {{ $app->created_at->format('d M Y') }}
@@ -203,6 +207,12 @@
                             </div>
                             <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">
                                 {{ $category }} &bull; {{ $institution }}@if($city) &bull; {{ $city }}@endif
+                            </div>
+                            <div style="margin-top: 6px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                                @include('partials.rating-badge', ['average' => $tr['average'] ?? null, 'count' => $tr['count'] ?? 0])
+                                @if($app->user)
+                                    <a href="{{ route('penyedia.talents.show', $app->user) }}" style="font-size:12.5px; font-weight:700; color:#0fa48f;">Riwayat penilaian &rarr;</a>
+                                @endif
                             </div>
                             @if($bio)
                                 <div style="font-size: 13px; color: #4b5563; margin-top: 6px; line-height: 1.5;">

@@ -43,7 +43,20 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // Integrasi Sponsored Project & reputasi di dashboard.
+        $livePromotions = \App\Models\ProjectPromotion::where('user_id', $user->id)
+            ->live()->withStats()->with('project')->latest('start_at')->get();
+        $promotableCount = (clone $projectQuery)->get()->filter(fn ($p) => $p->promotionBlocker() === null)->count();
+        $reputation = app(\App\Services\Rating\RatingService::class)->summaryFor($user, \App\Models\Rating::ROLE_PENYEDIA);
+        $pendingWork = \App\Models\ProjectWorkCompletion::where('provider_id', $user->id)
+            ->where('status', \App\Models\ProjectWorkCompletion::STATUS_PENDING_CONFIRMATION)
+            ->where('requested_by', '!=', $user->id)->count();
+
         return view('penyedia.dashboard', [
+            'livePromotions' => $livePromotions,
+            'promotableCount' => $promotableCount,
+            'reputation' => $reputation,
+            'pendingWork' => $pendingWork,
             'user' => $user,
             'profile' => $profile,
             'businessName' => $businessName,

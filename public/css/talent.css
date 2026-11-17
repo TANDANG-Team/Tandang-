@@ -834,3 +834,6 @@ textarea.form-control {
     }
 }
 
+
+/* Cegah konten lebar (banner Sponsored, tabel) mendorong layout keluar viewport */
+.app-main { min-width: 0; }

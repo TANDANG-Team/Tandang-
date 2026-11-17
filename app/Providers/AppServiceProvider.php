@@ -11,7 +11,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Ganti dengan implementasi Midtrans/Xendit saat integrasi gateway sungguhan.
+        $this->app->bind(
+            \App\Contracts\PromotionPaymentGateway::class,
+            \App\Services\Payments\ManualQrisGateway::class
+        );
     }
 
     /**
