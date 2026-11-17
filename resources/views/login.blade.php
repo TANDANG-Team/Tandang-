@@ -11,6 +11,8 @@
 
     <link rel="stylesheet" href="{{ asset('css/login.css') }}">
     <link rel="stylesheet" href="{{ asset('css/tandang-dialog.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/password-toggle.css') }}">
+    <script src="{{ asset('js/password-toggle.js') }}" defer></script>
     <script src="{{ asset('js/tandang-dialog.js') }}" defer></script>
     <script src="{{ asset('js/login.js') }}" defer></script>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
