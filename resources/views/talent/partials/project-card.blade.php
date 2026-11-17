@@ -2,11 +2,9 @@
     Kartu proyek untuk Talenta (beranda, rekomendasi, cari). Seluruh kartu bisa diklik untuk membuka modal detail.
     $p             : Project (sudah berisi match_score / match_data)
     $applyStatus   : ?array hasil ProjectApplyService::getApplyStatus
-    $showRating    : bool — tampilkan rating Penyedia (halaman cari)
     $showBreakdown : bool — tampilkan rincian kecocokan singkat (halaman rekomendasi)
 --}}
 @php
-    $showRating = $showRating ?? false;
     $showBreakdown = $showBreakdown ?? false;
     $scoreClass = $p->match_score >= 80 ? 'high' : ($p->match_score >= 60 ? 'medium' : 'low');
     $skills = $p->skills ?? [];
@@ -36,17 +34,7 @@
         <span class="pcard-provider">{{ $p->provider_name }}</span>
         <h3 class="pcard-title">{{ $p->title }}</h3>
 
-        @if($showRating)
-            <div class="tdg-rating-inline pcard-rating">
-                @if($p->provider_rating !== null)
-                    @include('partials.stars', ['score' => $p->provider_rating])
-                    {{ number_format($p->provider_rating, 1, ',', '') }} / 5
-                    <span class="count">({{ $p->provider_rating_count }} penilaian)</span>
-                @else
-                    <span class="count">Belum Ada Penilaian</span>
-                @endif
-            </div>
-        @endif
+        @include('talent.partials.provider-rating', ['rating' => $p->provider_rating ?? null, 'count' => $p->provider_rating_count ?? 0, 'class' => 'pcard-rating'])
 
         <p class="pcard-desc">{{ $p->description }}</p>
 

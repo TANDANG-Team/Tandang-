@@ -32,15 +32,7 @@
             <span class="sponsored-feature__logo" aria-hidden="true">{{ $initial }}</span>
             <div style="min-width:0;">
                 <div class="sponsored-feature__provider-name">{{ $project->provider_name }}</div>
-                @if(($project->provider_rating ?? null) !== null)
-                    <span class="tdg-rating-inline">
-                        @include('partials.stars', ['score' => $project->provider_rating])
-                        {{ number_format($project->provider_rating, 1, ',', '') }}
-                        / 5 <span class="count">({{ $project->provider_rating_count }} penilaian)</span>
-                    </span>
-                @else
-                    <span class="tdg-rating-inline"><span class="count">Belum Ada Penilaian</span></span>
-                @endif
+                @include('talent.partials.provider-rating', ['rating' => $project->provider_rating ?? null, 'count' => $project->provider_rating_count ?? 0])
             </div>
         </div>
 

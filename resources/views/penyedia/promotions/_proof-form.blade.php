@@ -13,7 +13,7 @@
         <input type="number" id="payer_amount{{ $late ? 'Late' : '' }}" name="payer_amount" min="1" step="1" inputmode="numeric" required value="{{ old('payer_amount', $transaction->amount) }}">
     </div>
     <div>
-        <label for="payer_paid_at{{ $late ? 'Late' : '' }}">Waktu pembayaran</label>
+        <label for="payer_paid_at{{ $late ? 'Late' : '' }}">Waktu pembayaran (WIB)</label>
         <input type="datetime-local" id="payer_paid_at{{ $late ? 'Late' : '' }}" name="payer_paid_at" value="{{ old('payer_paid_at') }}">
     </div>
     <div>

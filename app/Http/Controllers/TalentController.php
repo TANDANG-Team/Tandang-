@@ -56,6 +56,9 @@ class TalentController extends Controller
             return $project;
         });
 
+        // Proyek promosi tampil sebagai kartu Featured di atas rekomendasi (tidak diulang di grid).
+        [$projects, $featuredProject] = $this->decorateListing($projects);
+
         $topRecommendations = !empty($talent->assessment_answers)
             ? $projects->sortByDesc('match_score')->take(6)->values()
             : $projects->take(6)->values();
@@ -74,8 +77,10 @@ class TalentController extends Controller
             'talent'             => $talent,
             'topRecommendations' => $topRecommendations,
             'recentApplications' => $recentApplications,
-            'applyStatuses'      => $this->applyService->getApplyStatuses($topRecommendations, $user),
+            'applyStatuses'      => $this->applyService->getApplyStatuses($featuredProject ? $topRecommendations->concat([$featuredProject]) : $topRecommendations, $user),
             'totalApplied'       => $totalApplied,
+            'featuredProject'    => $featuredProject,
+            'pageToken'          => Str::random(24),
         ]);
     }
 
@@ -101,11 +106,15 @@ class TalentController extends Controller
             $projects = $projects->sortByDesc('match_score')->values();
         }
 
+        [$projects, $featuredProject] = $this->decorateListing($projects);
+
         return view('talent.rekomendasi', [
             'user' => $user,
             'talent' => $talent,
             'projects' => $projects,
-            'applyStatuses' => $this->applyService->getApplyStatuses($projects, $user),
+            'applyStatuses' => $this->applyService->getApplyStatuses($featuredProject ? $projects->concat([$featuredProject]) : $projects, $user),
+            'featuredProject' => $featuredProject,
+            'pageToken' => Str::random(24),
         ]);
     }
 
@@ -155,41 +164,8 @@ class TalentController extends Controller
             $categories = collect(['Kreatif', 'Operasional', 'Administrasi', 'Web Development', 'Desain Grafis', 'Digital Marketing']);
         }
 
-        // ── Sponsored Project ────────────────────────────────────────────────
-        // Hanya promosi untuk proyek yang SUDAH lolos filter/pencarian Talenta → tetap relevan.
-        // Urutan daftar reguler tidak diubah; promosi hanya menambah visibilitas.
-        $livePromotions = ProjectPromotion::forTalent()
-            ->whereIn('project_id', $projects->pluck('id'))
-            ->get(['id', 'project_id', 'start_at', 'end_at'])
-            ->keyBy('project_id');
-
-        // Rotasi adil: satu kartu Featured dipilih acak dari promosi yang relevan.
-        $featuredPromotion = $livePromotions->isNotEmpty() ? $livePromotions->random() : null;
-        $featuredProject = $featuredPromotion ? $projects->firstWhere('id', $featuredPromotion->project_id) : null;
-
-        // Hindari kartu yang sama tampil dua kali.
-        if ($featuredProject) {
-            $projects = $projects->reject(fn ($p) => $p->id === $featuredProject->id)->values();
-        }
-
-        // Rating Penyedia (satu query agregat, tanpa N+1).
-        // Sumber sama dengan profil & syarat promosi: hanya rating valid dari Talenta.
-        $providerRatings = app(\App\Services\Rating\RatingService::class)->averagesFor(
-            $projects->pluck('user_id')->push($featuredProject?->user_id),
-            \App\Models\Rating::ROLE_PENYEDIA
-        );
-
-        $decorate = function ($project) use ($livePromotions, $providerRatings) {
-            $project->promotion_id = $livePromotions[$project->id]->id ?? null;
-            $rating = $providerRatings[$project->user_id] ?? null;
-            $project->provider_rating = $rating['average'] ?? null;
-            $project->provider_rating_count = $rating['count'] ?? 0;
-            return $project;
-        };
-        $projects->transform($decorate);
-        if ($featuredProject) {
-            $decorate($featuredProject);
-        }
+        // Promosi hanya untuk proyek yang SUDAH lolos filter/pencarian → tetap relevan.
+        [$projects, $featuredProject] = $this->decorateListing($projects);
 
         return view('talent.cari', [
             'user'              => $user,
@@ -199,7 +175,7 @@ class TalentController extends Controller
             'applyStatuses'     => $this->applyService->getApplyStatuses($featuredProject ? $projects->concat([$featuredProject]) : $projects, $user),
             'filters'           => $request->only(['q', 'category', 'work_type', 'location']),
             'featuredProject'   => $featuredProject,
-            'pageToken'         => \Illuminate\Support\Str::random(24),
+            'pageToken'         => Str::random(24),
         ]);
     }
 
@@ -642,6 +618,51 @@ class TalentController extends Controller
         ]);
 
         return redirect()->route('talent.asesmen')->with('success', 'Asesmen gaya kerja berhasil disimpan! Skor kecocokan proyek kini memperhitungkan gaya kerjamu.');
+    }
+
+    /**
+     * Lengkapi daftar proyek Talenta (beranda, rekomendasi, cari) dengan:
+     *  - promotion_id untuk proyek yang sedang dipromosikan,
+     *  - satu Featured Sponsored Project (dipilih acak dari promosi aktif di daftar ini → rotasi adil),
+     *    dikeluarkan dari daftar agar kartu yang sama tidak tampil dua kali,
+     *  - rating Penyedia (provider_rating / provider_rating_count) dari satu query agregat.
+     * Urutan daftar reguler tidak diubah; promosi hanya menambah visibilitas.
+     *
+     * @return array{0: \Illuminate\Support\Collection, 1: ?Project}
+     */
+    protected function decorateListing($projects): array
+    {
+        $livePromotions = ProjectPromotion::forTalent()
+            ->whereIn('project_id', $projects->pluck('id'))
+            ->get(['id', 'project_id', 'start_at', 'end_at'])
+            ->keyBy('project_id');
+
+        $featuredPromotion = $livePromotions->isNotEmpty() ? $livePromotions->random() : null;
+        $featuredProject = $featuredPromotion ? $projects->firstWhere('id', $featuredPromotion->project_id) : null;
+
+        if ($featuredProject) {
+            $projects = $projects->reject(fn ($p) => $p->id === $featuredProject->id)->values();
+        }
+
+        // Sumber sama dengan profil & syarat promosi: hanya rating valid dari Talenta.
+        $providerRatings = app(\App\Services\Rating\RatingService::class)->averagesFor(
+            $projects->pluck('user_id')->push($featuredProject?->user_id)->filter()->unique()->values(),
+            \App\Models\Rating::ROLE_PENYEDIA
+        );
+
+        $decorate = function ($project) use ($livePromotions, $providerRatings) {
+            $project->promotion_id = $livePromotions[$project->id]->id ?? null;
+            $rating = $providerRatings[$project->user_id] ?? null;
+            $project->provider_rating = $rating['average'] ?? null;
+            $project->provider_rating_count = $rating['count'] ?? 0;
+            return $project;
+        };
+        $projects->transform($decorate);
+        if ($featuredProject) {
+            $decorate($featuredProject);
+        }
+
+        return [$projects, $featuredProject];
     }
 
     protected function getOrCreateTalentProfile($user): TalentProfile

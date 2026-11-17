@@ -252,6 +252,24 @@ class SponsoredProjectTest extends TestCase
         $this->assertNull($this->project->fresh()->promotionBlocker(), 'Boleh membuat checkout baru.');
     }
 
+    public function test_payer_paid_at_is_read_as_wib_and_stored_as_utc(): void
+    {
+        $this->configureQris();
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-17 14:50:00', 'UTC')); // 21.50 WIB
+
+        $promo = $this->service->checkout($this->project, $this->penyedia);
+
+        // Waktu yang benar-benar di depan (22.30 WIB) tetap ditolak.
+        $this->submitProof($promo, ['payer_paid_at' => '2026-11-17T22:30'])->assertSessionHasErrors('payer_paid_at');
+
+        // Jam transfer 21.48 WIB (datetime-local, tanpa zona waktu) bukan "masa depan".
+        $this->submitProof($promo, ['payer_paid_at' => '2026-11-17T21:48'])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('penyedia.promotions.payment', $promo));
+        $this->assertSame('2026-11-17 14:48:00', $promo->transaction->fresh()->payer_paid_at->utc()->format('Y-m-d H:i:s'));
+    }
+
     public function test_manual_qris_flow_requires_admin_approval(): void
     {
         $this->configureQris();
@@ -474,6 +492,48 @@ class SponsoredProjectTest extends TestCase
         // Proyek yang sama tidak muncul dua kali (dikeluarkan dari grid).
         $this->assertFalse($response->viewData('projects')->contains('id', $this->project->id));
         $this->assertTrue($response->viewData('projects')->contains('id', $regular->id));
+    }
+
+    public function test_featured_card_also_shown_on_beranda_and_rekomendasi_with_tracking(): void
+    {
+        $regular = Project::factory()->create(['title' => 'Proyek Reguler Tanpa Promosi']);
+        $promo = $this->activate();
+
+        foreach (['talent.beranda', 'talent.rekomendasi'] as $route) {
+            $response = $this->actingAs($this->talenta)->get(route($route))->assertOk();
+
+            $response->assertSee('sponsored-feature', false)
+                ->assertSee('data-promo-id="' . $promo->id . '"', false)
+                ->assertSee('data-placement="banner"', false)
+                ->assertSee('/talent/promosi', false)       // skrip tracking impression & klik
+                ->assertSee($regular->title);
+
+            $this->assertSame($this->project->id, $response->viewData('featuredProject')->id, $route);
+            $list = $route === 'talent.beranda' ? 'topRecommendations' : 'projects';
+            $this->assertFalse($response->viewData($list)->contains('id', $this->project->id), "{$route}: tidak tampil dua kali");
+        }
+    }
+
+    public function test_no_featured_card_on_beranda_without_live_promotion(): void
+    {
+        Project::factory()->create(['title' => 'Proyek Reguler Tanpa Promosi']);
+
+        $response = $this->actingAs($this->talenta)->get(route('talent.beranda'))->assertOk();
+        $this->assertNull($response->viewData('featuredProject'));
+        $response->assertDontSee('sponsored-feature"', false);
+    }
+
+    public function test_every_project_card_shows_provider_rating_or_unavailable_notice(): void
+    {
+        $unrated = User::factory()->create(['role' => 'penyedia_proyek']);
+        Project::factory()->create(['user_id' => $unrated->id, 'title' => 'Proyek Penyedia Baru']);
+
+        foreach (['talent.beranda', 'talent.rekomendasi', 'talent.cari'] as $route) {
+            $this->actingAs($this->talenta)->get(route($route))->assertOk()
+                ->assertSee('4,6 / 5')                    // rata-rata 4,6 dari 3 penilaian (proyek tanpa promosi)
+                ->assertSee('(3 penilaian)')
+                ->assertSee('Rating tidak tersedia');      // penyedia tanpa rating valid, bukan 0,0
+        }
     }
 
     public function test_sponsored_respects_search_filter_and_hides_when_none(): void

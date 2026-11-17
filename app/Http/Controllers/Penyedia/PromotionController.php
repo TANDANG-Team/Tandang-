@@ -10,6 +10,8 @@ use App\Models\PromotionPackage;
 use App\Models\PromotionTransaction;
 use App\Services\PromotionService;
 use App\Services\PromotionStatsService;
+use App\Support\Wib;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -165,12 +167,16 @@ class PromotionController extends Controller
     {
         Gate::authorize('submitProof', $promotion);
 
+        // Input datetime-local berisi jam dinding WIB tanpa zona waktu, sedangkan app.timezone = UTC.
+        // Bandingkan dengan "sekarang" versi WIB (toleransi 2 menit untuk selisih jam HP vs server).
+        $nowWib = now(Wib::TZ)->addMinutes(2)->format('Y-m-d H:i:s');
+
         $data = $request->validate([
             'proof'           => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
             'payer_amount'    => ['required', 'integer', 'min:1', 'max:100000000'],
             'payer_name'      => ['nullable', 'string', 'max:150'],
             'payer_reference' => ['nullable', 'string', 'max:100', 'regex:/^[A-Za-z0-9\-\/_. ]+$/'],
-            'payer_paid_at'   => ['nullable', 'date', 'before_or_equal:now'],
+            'payer_paid_at'   => ['nullable', 'date', 'before_or_equal:' . $nowWib],
         ], [
             'proof.required'          => 'Unggah bukti pembayaran.',
             'proof.mimes'             => 'Bukti harus berformat JPG, JPEG, PNG, atau PDF.',
@@ -190,7 +196,9 @@ class PromotionController extends Controller
                 'payer_name'      => $data['payer_name'] ?? null,
                 'payer_reference' => $data['payer_reference'] ?? null,
                 'payer_amount'    => (int) $data['payer_amount'],
-                'payer_paid_at'   => $data['payer_paid_at'] ?? null,
+                'payer_paid_at'   => ! empty($data['payer_paid_at'])
+                    ? Carbon::parse($data['payer_paid_at'], Wib::TZ)->utc()
+                    : null,
             ], $path, $hash);
         } catch (PromotionException $e) {
             \Illuminate\Support\Facades\Storage::disk('local')->delete($path);
