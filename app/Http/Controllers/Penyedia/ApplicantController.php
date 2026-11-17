@@ -61,10 +61,15 @@ class ApplicantController extends Controller
 
         $applications = $applicationsQuery->with(['project', 'user.talentProfile'])->latest()->paginate(10)->withQueryString();
 
+        // Rating yang DITERIMA tiap Talenta dari Penyedia (satu query agregat).
+        $talentRatings = app(\App\Services\Rating\RatingService::class)
+            ->averagesFor($applications->pluck('user_id'), \App\Models\Rating::ROLE_TALENTA);
+
         return view('penyedia.applicants.index', [
             'user' => $user,
             'profile' => $user->organizationProfile,
             'applications' => $applications,
+            'talentRatings' => $talentRatings,
             'myProjects' => $myProjects,
             'counts' => $counts,
             'currentStatus' => $status,

@@ -186,5 +186,9 @@
         </div>
     </div>
 </div>
+
+<div style="margin-top: 24px;" id="reputasi">
+    @include('partials.rating-summary', ['summary' => $reputation, 'subject' => 'Talenta', 'reportRoute' => 'talent.ratings.report'])
+</div>
 @endsection
 

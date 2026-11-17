@@ -76,6 +76,17 @@
     </article>
 </div>
 
+
+<!-- Section: Reputasi (rating dari Penyedia) -->
+<div style="margin: 28px 0;">
+    @include('partials.reputation-mini', [
+        'summary'    => $reputation,
+        'title'      => 'Rating Saya',
+        'raterLabel' => 'Penyedia',
+        'allUrl'     => route('talent.profil') . '#reputasi',
+    ])
+</div>
+
 <!-- Section: Rekomendasi Proyek -->
 <div class="section-title">
     <h2>Rekomendasi Proyek untukmu</h2>
@@ -89,8 +100,9 @@
                 $applyStatus = $applyStatuses[$p->id] ?? null;
                 $scoreClass = $p->match_score >= 80 ? 'high' : ($p->match_score >= 60 ? 'medium' : 'low');
             @endphp
-            <article class="project-card">
+            <article class="project-card has-cover">
                 <div>
+                    <div class="project-cover"><img src="{{ $p->cover_url }}" alt="" loading="lazy"></div>
                     <div class="project-card-top">
                         <span class="provider">{{ $p->provider_name }}</span>
                         <span class="match-score-badge {{ $scoreClass }}">

@@ -13,6 +13,10 @@
             </button>
         </div>
 
+        <div id="modalCoverWrap" class="apply-cover" hidden>
+            <img id="modalCover" src="" alt="">
+        </div>
+
         <!-- Ringkasan proyek -->
         <div class="apply-summary">
             <span class="apply-summary-icon" aria-hidden="true">
@@ -21,6 +25,7 @@
             <div>
                 <h3 id="modalTitle"></h3>
                 <p id="modalSubtitle"></p>
+                <a id="modalProviderLink" class="apply-provider-link" href="#" hidden></a>
             </div>
         </div>
 
@@ -189,6 +194,24 @@ function openDetailModal(project, applyStatus) {
 
     document.getElementById('modalTitle').textContent = project.title;
     document.getElementById('modalSubtitle').textContent = `${project.provider_name || '-'} · ${location}`;
+
+    const coverWrap = document.getElementById('modalCoverWrap');
+    document.getElementById('modalCover').src = project.cover_url || '';
+    coverWrap.hidden = !project.cover_url;
+
+    // Rating Penyedia hanya dikirim di halaman Cari; di halaman lain cukup tautan profil.
+    const providerLink = document.getElementById('modalProviderLink');
+    providerLink.hidden = !project.user_id;
+    if (project.user_id) {
+        providerLink.href = '{{ url('/talent/penyedia') }}/' + project.user_id;
+        let rating = '';
+        if (project.provider_rating !== undefined) {
+            rating = project.provider_rating !== null
+                ? `★ ${Number(project.provider_rating).toFixed(1).replace('.', ',')} / 5 (${project.provider_rating_count} penilaian) · `
+                : 'Belum Ada Penilaian · ';
+        }
+        providerLink.textContent = rating + 'Lihat profil Penyedia';
+    }
     setText('modalEyebrow', [project.provider_name, project.category].filter(Boolean).join(' · '));
     document.getElementById('modalDesc').textContent = project.description || '-';
     document.getElementById('modalResp').textContent = project.responsibilities || '';

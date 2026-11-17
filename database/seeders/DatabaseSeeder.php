@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminAndTalentSeeder::class,
             ProjectAndProviderSeeder::class,
+            PromotionPackageSeeder::class,
         ]);
     }
 }

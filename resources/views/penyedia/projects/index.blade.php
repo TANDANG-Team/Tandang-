@@ -83,8 +83,16 @@
                     @foreach($projects as $project)
                         <tr style="border-bottom: 1px solid #f3f4f6; transition: background 0.15s;">
                             <td style="padding: 16px 18px;">
-                                <div style="font-weight: 700; color: #111827; font-size: 14px;">{{ $project->title }}</div>
-                                <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">{{ Str::limit($project->description, 50) }}</div>
+                                <div style="display:flex; gap:12px; align-items:center; min-width:240px;">
+                                    <img src="{{ $project->cover_url }}" alt="" style="width:64px; height:40px; object-fit:cover; border-radius:8px; flex:none; background:#e7f7f4;">
+                                    <div style="min-width:0;">
+                                        <div style="font-weight: 700; color: #111827; font-size: 14px;">{{ $project->title }}</div>
+                                        <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">{{ Str::limit($project->description, 50) }}</div>
+                                        @if($project->livePromotion)
+                                            <a href="{{ route('penyedia.promotions.stats', $project->livePromotion) }}" class="tdg-pill sponsor" style="margin-top:5px; text-decoration:none;">Dipromosikan · sisa {{ $project->livePromotion->remaining_label }}</a>
+                                        @endif
+                                    </div>
+                                </div>
                             </td>
                             <td style="padding: 16px 18px; color: #374151;">{{ $project->category }}</td>
                             <td style="padding: 16px 18px; color: #374151;">{{ $project->location }}</td>
@@ -132,6 +140,11 @@
                                             </button>
                                         </form>
                                     @elseif($project->isPublished())
+                                        @if($project->promotionBlocker() === null)
+                                            <a href="{{ route('penyedia.promotions.checkout', $project) }}" class="btn-secondary-action" style="padding: 5px 10px; font-size: 12px; color: #8a5300; border-color: #ffd89a;" title="Sponsored Project: Rp15.000 / 4 hari">
+                                                Promosikan
+                                            </a>
+                                        @endif
                                         <form action="{{ route('penyedia.projects.status', $project) }}" method="POST" style="margin: 0;">
                                             @csrf
                                             @method('PATCH')

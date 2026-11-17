@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Project extends Model
@@ -65,7 +66,24 @@ class Project extends Model
         'workstyle_requirements',
         'workstyle_confirmed',
         'applicants_count',
+        'cover_image',
     ];
+
+    /** cover_url ikut ter-serialisasi agar modal detail (JSON) bisa menampilkan gambar. */
+    protected $appends = ['cover_url'];
+
+    protected static function booted(): void
+    {
+        // Hentikan penayangan promosi segera saat proyek ditutup/diarsipkan/dihapus.
+        static::updated(function (Project $project) {
+            if ($project->wasChanged('status') && ! $project->isPublished()) {
+                app(\App\Services\PromotionService::class)->stopIneligibleForProject($project);
+            }
+        });
+        static::deleted(function (Project $project) {
+            app(\App\Services\PromotionService::class)->stopIneligibleForProject($project);
+        });
+    }
 
     protected function casts(): array
     {
@@ -119,6 +137,84 @@ class Project extends Model
     public function applications(): HasMany
     {
         return $this->hasMany(ProjectApplication::class, 'project_id');
+    }
+
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(ProjectPromotion::class, 'project_id');
+    }
+
+    /** Promosi yang sedang tayang menurut timestamp. */
+    public function livePromotion(): HasOne
+    {
+        return $this->hasOne(ProjectPromotion::class, 'project_id')->live()->latest('start_at');
+    }
+
+    public function latestPromotion(): HasOne
+    {
+        return $this->hasOne(ProjectPromotion::class, 'project_id')->latestOfMany();
+    }
+
+    /**
+     * Ada promosi aktif, checkout yang masih dalam batas waktu bayar, atau pembayaran
+     * yang sedang/menunggu ditinjau Admin (mencegah Penyedia membayar dua kali).
+     */
+    public function hasBlockingPromotion(): bool
+    {
+        return $this->promotions()
+            ->where(function ($q) {
+                $q->where(fn ($a) => $a->live())
+                  ->orWhereHas('transaction', function ($t) {
+                      $t->where(fn ($p) => $p->where('status', PromotionTransaction::STATUS_PENDING)->where('expires_at', '>', now()))
+                        ->orWhere(fn ($r) => $r->awaitingReview());
+                  });
+            })
+            ->exists();
+    }
+
+    /** Masih dipublikasikan, belum dihapus, dan kuota Talenta belum penuh. */
+    public function isOpenForTalent(): bool
+    {
+        return ! $this->trashed() && $this->isPublished() && ! $this->isQuotaFilled();
+    }
+
+    /** Batas pendaftaran (registration_deadline / deadline) sudah lewat → tidak lagi menerima lamaran. */
+    public function isRegistrationOver(): bool
+    {
+        $deadline = $this->registration_deadline;
+
+        return $deadline !== null && $deadline->copy()->endOfDay()->lt(now());
+    }
+
+    /** Alasan proyek tidak bisa dipromosikan (null = boleh). */
+    public function promotionBlocker(): ?string
+    {
+        return match (true) {
+            $this->trashed()              => 'Proyek sudah dihapus',
+            $this->isDraft()              => 'Masih draf — publikasikan dulu',
+            $this->isClosed()             => 'Proyek sudah ditutup',
+            $this->isArchived()           => 'Proyek sudah diarsipkan',
+            ! $this->isPublished()        => 'Belum dipublikasikan',
+            $this->isRegistrationOver()   => 'Batas pendaftaran sudah lewat',
+            $this->isQuotaFilled()        => 'Kuota Talenta sudah terpenuhi',
+            $this->hasBlockingPromotion() => 'Sedang dipromosikan / pembayaran sedang diproses',
+            default                       => null,
+        };
+    }
+
+    public function isPromoted(): bool
+    {
+        return $this->relationLoaded('livePromotion')
+            ? $this->livePromotion !== null
+            : $this->livePromotion()->exists();
+    }
+
+    /** URL gambar sampul: unggahan Penyedia, atau ilustrasi bawaan sesuai kategori. */
+    public function getCoverUrlAttribute(): string
+    {
+        return $this->cover_image
+            ? route('project.cover', ['project' => $this->id, 'v' => substr(md5($this->cover_image), 0, 8)])
+            : \App\Support\ProjectCover::fallback((string) $this->category, (string) $this->title);
     }
 
     public function acceptedApplications(): HasMany

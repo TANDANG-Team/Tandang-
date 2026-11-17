@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\Admin\ProjectController as AdminProjectController;
+use App\Http\Controllers\Admin\PromotionController as AdminPromotionController;
+use App\Http\Controllers\Admin\RatingModerationController;
+use App\Http\Controllers\EngagementController;
+use App\Http\Controllers\PromotionTrackingController;
+use App\Http\Controllers\ReputationController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VerificationController as AdminVerificationController;
 use App\Http\Controllers\OrganizationProfileController;
@@ -9,6 +14,7 @@ use App\Http\Controllers\Penyedia\ApplicantController;
 use App\Http\Controllers\Penyedia\DashboardController;
 use App\Http\Controllers\Penyedia\NotificationController;
 use App\Http\Controllers\Penyedia\ProjectController;
+use App\Http\Controllers\Penyedia\PromotionController as PenyediaPromotionController;
 use App\Http\Controllers\TalentController;
 use App\Models\Project;
 use App\Models\TalentProfile;
@@ -152,6 +158,32 @@ Route::middleware(['auth', 'penyedia'])->prefix('penyedia')->name('penyedia.')->
     // Account Settings
     Route::get('/pengaturan', [AccountSettingController::class, 'edit'])->name('settings');
     Route::post('/pengaturan/password', [AccountSettingController::class, 'updatePassword'])->name('settings.password');
+
+    // Sponsored Project (Promosi Proyek)
+    Route::prefix('promosi')->name('promotions.')->group(function () {
+        Route::get('/', [PenyediaPromotionController::class, 'index'])->name('index');
+        Route::get('/riwayat', [PenyediaPromotionController::class, 'history'])->name('history');
+        Route::get('/proyek/{project}/checkout', [PenyediaPromotionController::class, 'checkout'])->name('checkout');
+        Route::post('/proyek/{project}/checkout', [PenyediaPromotionController::class, 'store'])->name('store');
+        Route::get('/{promotion}/pembayaran', [PenyediaPromotionController::class, 'payment'])->name('payment');
+        Route::get('/{promotion}/status', [PenyediaPromotionController::class, 'status'])->name('status');
+        Route::post('/{promotion}/konfirmasi', [PenyediaPromotionController::class, 'submitProof'])->name('proof.submit');
+        Route::get('/{promotion}/bukti', [PenyediaPromotionController::class, 'proofFile'])->name('proof');
+        Route::post('/{promotion}/simulasi/berhasil', [PenyediaPromotionController::class, 'simulatePaid'])->name('simulate.paid');
+        Route::post('/{promotion}/simulasi/gagal', [PenyediaPromotionController::class, 'simulateFailed'])->name('simulate.failed');
+        Route::post('/{promotion}/batal', [PenyediaPromotionController::class, 'cancel'])->name('cancel');
+        Route::get('/{promotion}/statistik', [PenyediaPromotionController::class, 'stats'])->name('stats');
+    });
+
+    // Penilaian Talenta (riwayat pengerjaan & rating)
+    Route::get('/penilaian', [EngagementController::class, 'index'])->name('engagements.index');
+    Route::post('/penilaian/{completion}/ajukan-selesai', [EngagementController::class, 'requestCompletion'])->name('engagements.request');
+    Route::post('/penilaian/{completion}/konfirmasi', [EngagementController::class, 'confirm'])->name('engagements.confirm');
+    Route::post('/penilaian/{completion}/sengketa', [EngagementController::class, 'dispute'])->name('engagements.dispute');
+    Route::get('/penilaian/{completion}/nilai', [EngagementController::class, 'rateForm'])->name('engagements.rate');
+    Route::post('/penilaian/{completion}/nilai', [EngagementController::class, 'rateStore'])->name('engagements.rate.store');
+    Route::post('/rating/{rating}/laporkan', [EngagementController::class, 'report'])->name('ratings.report');
+    Route::get('/talenta/{user}', [ReputationController::class, 'talent'])->name('talents.show');
 });
 
 // ================= Talenta Muda Routes =================
@@ -182,6 +214,22 @@ Route::middleware(['auth'])->prefix('talent')->name('talent.')->group(function (
     // Asesmen Gaya Kerja
     Route::get('/asesmen', [TalentController::class, 'asesmen'])->name('asesmen');
     Route::post('/asesmen', [TalentController::class, 'simpanAsesmen'])->name('asesmen.simpan');
+
+    // Riwayat Proyek & penilaian Penyedia
+    Route::get('/riwayat', [EngagementController::class, 'index'])->name('riwayat');
+    Route::post('/riwayat/{completion}/ajukan-selesai', [EngagementController::class, 'requestCompletion'])->name('riwayat.request');
+    Route::post('/riwayat/{completion}/konfirmasi', [EngagementController::class, 'confirm'])->name('riwayat.confirm');
+    Route::post('/riwayat/{completion}/sengketa', [EngagementController::class, 'dispute'])->name('riwayat.dispute');
+    Route::get('/riwayat/{completion}/nilai', [EngagementController::class, 'rateForm'])->name('riwayat.rate');
+    Route::post('/riwayat/{completion}/nilai', [EngagementController::class, 'rateStore'])->name('riwayat.rate.store');
+    Route::post('/rating/{rating}/laporkan', [EngagementController::class, 'report'])->name('ratings.report');
+    Route::get('/penyedia/{user}', [ReputationController::class, 'provider'])->name('providers.show');
+
+    // Tracking Sponsored Project (dibatasi laju untuk meredam spam)
+    Route::post('/promosi/{promotion}/impression', [PromotionTrackingController::class, 'impression'])
+        ->middleware('throttle:120,1')->name('promo.impression');
+    Route::post('/promosi/{promotion}/click', [PromotionTrackingController::class, 'click'])
+        ->middleware('throttle:60,1')->name('promo.click');
 });
 
 // ================= Admin Panel Routes =================
@@ -200,7 +248,45 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Manajemen Proyek
     Route::get('/proyek', [AdminProjectController::class, 'index'])->name('proyek.index');
     Route::post('/proyek/{id}/status', [AdminProjectController::class, 'updateStatus'])->name('proyek.status');
+
+    // Manajemen Promosi (tidak ada endpoint untuk mengubah status pembayaran)
+    Route::prefix('promosi')->name('promotions.')->group(function () {
+        Route::get('/', [AdminPromotionController::class, 'index'])->name('index');
+        Route::get('/{promotion}', [AdminPromotionController::class, 'show'])->name('show');
+        Route::post('/{promotion}/stop', [AdminPromotionController::class, 'stop'])->name('stop');
+    });
+
+    // Verifikasi Pembayaran QRIS (manual)
+    Route::prefix('pembayaran')->name('payments.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\PaymentVerificationController::class, 'index'])->name('index');
+        Route::get('/{transaction}', [\App\Http\Controllers\Admin\PaymentVerificationController::class, 'show'])->name('show');
+        Route::get('/{transaction}/bukti', [\App\Http\Controllers\Admin\PaymentVerificationController::class, 'proof'])->name('proof');
+        Route::post('/{transaction}/setujui', [\App\Http\Controllers\Admin\PaymentVerificationController::class, 'approve'])->name('approve');
+        Route::post('/{transaction}/tolak', [\App\Http\Controllers\Admin\PaymentVerificationController::class, 'reject'])->name('reject');
+    });
+
+    // Moderasi Rating
+    Route::prefix('rating')->name('ratings.')->group(function () {
+        Route::get('/', [RatingModerationController::class, 'index'])->name('index');
+        Route::post('/{rating}/sembunyikan', [RatingModerationController::class, 'hide'])->name('hide');
+        Route::post('/{rating}/pulihkan', [RatingModerationController::class, 'restore'])->name('restore');
+        Route::post('/{rating}/batalkan', [RatingModerationController::class, 'void'])->name('void');
+        Route::post('/{rating}/batal-pembatalan', [RatingModerationController::class, 'unvoid'])->name('unvoid');
+        Route::post('/laporan/{report}', [RatingModerationController::class, 'handleReport'])->name('reports.handle');
+        Route::post('/sengketa/{completion}', [RatingModerationController::class, 'resolveDispute'])->name('disputes.resolve');
+    });
 });
+
+// ================= Gambar Sampul Proyek =================
+// Dilayani lewat route agar tidak bergantung pada symlink public/storage (Windows-friendly).
+Route::get('/project-cover/{project}', function (Project $project) {
+    $path = $project->cover_image;
+    abort_unless($path && \Illuminate\Support\Facades\Storage::disk('public')->exists($path), 404);
+
+    return \Illuminate\Support\Facades\Storage::disk('public')->response($path, null, [
+        'Cache-Control' => 'public, max-age=604800',
+    ]);
+})->name('project.cover');
 
 // ================= Logout =================
 Route::post('/web-logout', function (Request $request) {

@@ -35,9 +35,18 @@
     <a href="{{ route('talent.cari') }}" class="btn btn-secondary btn-sm">Reset</a>
 </form>
 
+@php $total = $projects->count() + ($featuredProject ? 1 : 0); @endphp
 <div style="margin-bottom: 18px; font-size: 13.5px; color: var(--muted);">
-    Ditemukan <strong>{{ $projects->count() }}</strong> proyek aktif.
+    Ditemukan <strong>{{ $total }}</strong> proyek aktif.
 </div>
+
+{{-- Featured Sponsored Project: satu kartu lebar penuh di atas hasil, hanya bila relevan dengan filter. --}}
+@if($featuredProject)
+    @include('partials.sponsored-feature', [
+        'project'   => $featuredProject,
+        'applyStatus' => $applyStatuses[$featuredProject->id] ?? null,
+    ])
+@endif
 
 @if($projects->count() > 0)
     <div class="project-grid">
@@ -46,8 +55,19 @@
                 $applyStatus = $applyStatuses[$p->id] ?? null;
                 $scoreClass = $p->match_score >= 80 ? 'high' : ($p->match_score >= 60 ? 'medium' : 'low');
             @endphp
-            <article class="project-card">
+            <article class="project-card has-cover {{ $p->promotion_id ? 'is-sponsored' : '' }}"
+                @if($p->promotion_id) data-promo-id="{{ $p->promotion_id }}" data-placement="list" @endif>
                 <div>
+                    <div class="project-cover">
+                        <img src="{{ $p->cover_url }}" alt="" loading="lazy">
+                        @if($p->promotion_id)
+                            <span class="tdg-pill sponsor">
+                                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.52l-5.88 3.09 1.12-6.55L2.48 9.42l6.58-.96z"/></svg>
+                                Dipromosikan
+                            </span>
+                        @endif
+                    </div>
+
                     <div class="project-card-top">
                         <span class="provider">{{ $p->provider_name }}</span>
                         <span class="match-score-badge {{ $scoreClass }}">
@@ -56,6 +76,15 @@
                     </div>
 
                     <h3>{{ $p->title }}</h3>
+                    @if($p->provider_rating !== null)
+                        <div class="tdg-rating-inline" style="margin:-2px 0 8px;">
+                            @include('partials.stars', ['score' => $p->provider_rating])
+                            {{ number_format($p->provider_rating, 1, ',', '') }} / 5
+                            <span class="count">({{ $p->provider_rating_count }} penilaian)</span>
+                        </div>
+                    @else
+                        <div class="tdg-rating-inline" style="margin:-2px 0 8px;"><span class="count">Belum Ada Penilaian</span></div>
+                    @endif
                     <p class="desc">{{ $p->description }}</p>
 
                     <div class="project-meta-pills">
@@ -87,14 +116,14 @@
 
                 <div class="project-card-footer">
                     <span class="comp">{{ $p->compensation ?: 'Sesuai Kesepakatan' }}</span>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="openDetailModal({{ json_encode($p) }}, {{ json_encode($applyStatus) }})">
+                    <button type="button" class="btn btn-secondary btn-sm {{ $p->promotion_id ? 'js-promo-cta' : '' }}" onclick="openDetailModal({{ json_encode($p) }}, {{ json_encode($applyStatus) }})">
                         {{ ($applyStatus['can_apply'] ?? true) ? 'Lihat Detail & Lamar' : 'Lihat Detail' }} &rarr;
                     </button>
                 </div>
             </article>
         @endforeach
     </div>
-@else
+@elseif(! $featuredProject)
     <div style="background: #fff; padding: 40px; border-radius: 12px; text-align: center; border: 1px dashed var(--line);">
         <p style="color: var(--muted);">Tidak ada proyek yang sesuai dengan kriteria pencarian Anda.</p>
     </div>
@@ -102,5 +131,65 @@
 
 <!-- Project Detail & Apply Modal -->
 @include('talent.partials.project-modal')
-@endsection
 
+@push('scripts')
+<script>
+/* ── Tracking Sponsored Project ───────────────────────────────────────────
+   Impression: ≥50% kartu terlihat selama ≥1 detik, maksimal sekali per promosi per muat-halaman.
+   Klik: dikirim ke server saat CTA kartu promosi diklik (server melakukan dedup & atribusi). */
+(function () {
+    const cards = document.querySelectorAll('[data-promo-id]');
+    if (!cards.length) return;
+
+    const pageToken = @json($pageToken);
+    const csrf = document.querySelector('meta[name="csrf-token"]').content;
+    const base = '{{ url('/talent/promosi') }}';
+    const minRatio = {{ config('promotion.impression_visible_ratio') }};
+    const minMs = {{ config('promotion.impression_min_ms') }};
+    const sent = new Set();
+    const timers = new Map();
+
+    function post(url, body) {
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+            body: JSON.stringify(body),
+            keepalive: true,
+            credentials: 'same-origin',
+        }).catch(() => {});
+    }
+
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                const el = entry.target;
+                const id = el.dataset.promoId;
+                if (sent.has(id)) return;
+                if (entry.isIntersecting && entry.intersectionRatio >= minRatio) {
+                    if (!timers.has(el)) {
+                        timers.set(el, setTimeout(() => {
+                            sent.add(id);
+                            observer.unobserve(el);
+                            post(`${base}/${id}/impression`, { page_token: pageToken, placement: el.dataset.placement });
+                        }, minMs));
+                    }
+                } else if (timers.has(el)) {
+                    clearTimeout(timers.get(el));
+                    timers.delete(el);
+                }
+            });
+        }, { threshold: [0, minRatio, 1] });
+        cards.forEach(c => observer.observe(c));
+    }
+
+    cards.forEach(card => {
+        card.querySelectorAll('.js-promo-cta').forEach(btn => {
+            btn.addEventListener('click', () => {
+                post(`${base}/${card.dataset.promoId}/click`, { placement: card.dataset.placement });
+            });
+        });
+    });
+})();
+</script>
+@endpush
+@endsection

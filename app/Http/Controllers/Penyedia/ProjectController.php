@@ -45,7 +45,7 @@ class ProjectController extends Controller
             });
         }
 
-        $projects = $projectsQuery->withCount('applications')->withApplyCounts()->latest()->paginate(10)->withQueryString();
+        $projects = $projectsQuery->withCount('applications')->withApplyCounts()->with('livePromotion')->latest()->paginate(10)->withQueryString();
 
         return view('penyedia.projects.index', [
             'user' => $user,
@@ -95,6 +95,7 @@ class ProjectController extends Controller
         $project->provider_name = $request->user()->organizationProfile?->organization_name
                                   ?? $request->user()->name;
 
+        $this->applyCoverImage($request, $project);
         $project->save();
 
         $message = $status === Project::STATUS_DRAFT
@@ -139,6 +140,8 @@ class ProjectController extends Controller
             $validated['status'] = Project::STATUS_PUBLISHED;
         }
 
+        // Validasi & terapkan sampul sebelum menyimpan apa pun.
+        $this->applyCoverImage($request, $project);
         $project->update($validated);
 
         // Sync legacy columns
@@ -193,6 +196,33 @@ class ProjectController extends Controller
 
         return redirect()->route('penyedia.projects.index')
             ->with('success', 'Proyek berhasil dihapus.');
+    }
+
+    /**
+     * Simpan/ganti/hapus gambar sampul. Disimpan di disk "public" tetapi dilayani lewat
+     * route project.cover, sehingga tidak bergantung pada symlink storage.
+     */
+    private function applyCoverImage(Request $request, Project $project): void
+    {
+        $request->validate([
+            'cover_image'  => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'remove_cover' => ['nullable', 'boolean'],
+        ], [
+            'cover_image.mimes' => 'Gambar sampul harus berformat JPG, PNG, atau WEBP.',
+            'cover_image.max'   => 'Ukuran gambar sampul maksimal 2 MB.',
+        ]);
+
+        $old = $project->cover_image;
+
+        if ($request->hasFile('cover_image')) {
+            $project->cover_image = $request->file('cover_image')->store('projects/covers', 'public');
+        } elseif ($request->boolean('remove_cover')) {
+            $project->cover_image = null;
+        }
+
+        if ($old && $old !== $project->cover_image) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($old);
+        }
     }
 
     /**

@@ -24,6 +24,7 @@ class OrganizationProfileController extends Controller
         return view('penyedia.profile', [
             'user' => $user,
             'profile' => $profile,
+            'reputation' => app(\App\Services\Rating\RatingService::class)->summaryFor($user, \App\Models\Rating::ROLE_PENYEDIA),
         ]);
     }
 

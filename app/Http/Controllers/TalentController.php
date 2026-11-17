@@ -7,6 +7,7 @@ use App\Exceptions\CancelNotAllowedException;
 use App\Models\Application;
 use App\Models\Project;
 use App\Models\ProjectApplication;
+use App\Models\ProjectPromotion;
 use App\Models\ProviderNotification;
 use App\Models\TalentProfile;
 use App\Services\ProjectApplyService;
@@ -68,12 +69,13 @@ class TalentController extends Controller
             ->get();
 
         return view('talent.beranda', [
-            'user' => $user,
-            'talent' => $talent,
+            'reputation'         => app(\App\Services\Rating\RatingService::class)->summaryFor($user, \App\Models\Rating::ROLE_TALENTA),
+            'user'               => $user,
+            'talent'             => $talent,
             'topRecommendations' => $topRecommendations,
             'recentApplications' => $recentApplications,
-            'applyStatuses' => $this->applyService->getApplyStatuses($topRecommendations, $user),
-            'totalApplied' => $totalApplied,
+            'applyStatuses'      => $this->applyService->getApplyStatuses($topRecommendations, $user),
+            'totalApplied'       => $totalApplied,
         ]);
     }
 
@@ -153,13 +155,51 @@ class TalentController extends Controller
             $categories = collect(['Kreatif', 'Operasional', 'Administrasi', 'Web Development', 'Desain Grafis', 'Digital Marketing']);
         }
 
+        // ── Sponsored Project ────────────────────────────────────────────────
+        // Hanya promosi untuk proyek yang SUDAH lolos filter/pencarian Talenta → tetap relevan.
+        // Urutan daftar reguler tidak diubah; promosi hanya menambah visibilitas.
+        $livePromotions = ProjectPromotion::forTalent()
+            ->whereIn('project_id', $projects->pluck('id'))
+            ->get(['id', 'project_id', 'start_at', 'end_at'])
+            ->keyBy('project_id');
+
+        // Rotasi adil: satu kartu Featured dipilih acak dari promosi yang relevan.
+        $featuredPromotion = $livePromotions->isNotEmpty() ? $livePromotions->random() : null;
+        $featuredProject = $featuredPromotion ? $projects->firstWhere('id', $featuredPromotion->project_id) : null;
+
+        // Hindari kartu yang sama tampil dua kali.
+        if ($featuredProject) {
+            $projects = $projects->reject(fn ($p) => $p->id === $featuredProject->id)->values();
+        }
+
+        // Rating Penyedia (satu query agregat, tanpa N+1).
+        // Sumber sama dengan profil & syarat promosi: hanya rating valid dari Talenta.
+        $providerRatings = app(\App\Services\Rating\RatingService::class)->averagesFor(
+            $projects->pluck('user_id')->push($featuredProject?->user_id),
+            \App\Models\Rating::ROLE_PENYEDIA
+        );
+
+        $decorate = function ($project) use ($livePromotions, $providerRatings) {
+            $project->promotion_id = $livePromotions[$project->id]->id ?? null;
+            $rating = $providerRatings[$project->user_id] ?? null;
+            $project->provider_rating = $rating['average'] ?? null;
+            $project->provider_rating_count = $rating['count'] ?? 0;
+            return $project;
+        };
+        $projects->transform($decorate);
+        if ($featuredProject) {
+            $decorate($featuredProject);
+        }
+
         return view('talent.cari', [
-            'user' => $user,
-            'talent' => $talent,
-            'projects' => $projects,
-            'categories' => $categories,
-            'applyStatuses' => $this->applyService->getApplyStatuses($projects, $user),
-            'filters' => $request->only(['q', 'category', 'work_type', 'location']),
+            'user'              => $user,
+            'talent'            => $talent,
+            'projects'          => $projects,
+            'categories'        => $categories,
+            'applyStatuses'     => $this->applyService->getApplyStatuses($featuredProject ? $projects->concat([$featuredProject]) : $projects, $user),
+            'filters'           => $request->only(['q', 'category', 'work_type', 'location']),
+            'featuredProject'   => $featuredProject,
+            'pageToken'         => \Illuminate\Support\Str::random(24),
         ]);
     }
 
@@ -188,7 +228,7 @@ class TalentController extends Controller
 
         // Semua aturan kuota divalidasi ulang di dalam transaksi + row lock (lihat ProjectApplyService).
         try {
-            $this->applyService->apply($project->id, $user, [
+            $projectApplication = $this->applyService->apply($project->id, $user, [
                 'message' => $message,
                 'match_score' => $matchScore,
                 'talent_snapshot' => [
@@ -223,6 +263,9 @@ class TalentController extends Controller
                 'is_read' => false,
             ]);
         }
+
+        // Atribusi Sponsored Project: hanya bila klik promosi tercatat di server ≤ 24 jam sebelumnya.
+        app(\App\Services\PromotionTrackingService::class)->attributeApplication($projectApplication, $user, $request->session());
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -327,6 +370,7 @@ class TalentController extends Controller
         return view('talent.profil', [
             'user' => $user,
             'talent' => $talent,
+            'reputation' => app(\App\Services\Rating\RatingService::class)->summaryFor($user, \App\Models\Rating::ROLE_TALENTA),
         ]);
     }
 
