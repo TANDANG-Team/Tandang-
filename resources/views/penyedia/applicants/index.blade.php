@@ -151,7 +151,10 @@
                     <!-- Form Terima -->
                     @if($app->status !== 'diterima')
                         <form action="{{ route('penyedia.applicants.status', $app) }}" method="POST" style="margin: 0;"
-                              onsubmit="return confirm('Apakah Anda yakin ingin MENERIMA pelamar ini untuk proyek {{ $app->project->title }}?');">
+                              data-confirm="Apakah Anda yakin ingin <strong>MENERIMA</strong> pelamar <strong>{{ $app->user->name ?? 'ini' }}</strong> untuk proyek <strong>{{ $app->project->title }}</strong>?"
+                              data-confirm-title="Terima Pelamar Proyek?"
+                              data-confirm-type="success"
+                              data-confirm-btn="Ya, Terima Pelamar">
                             @csrf
                             @method('PATCH')
                             <input type="hidden" name="status" value="diterima">
@@ -164,7 +167,10 @@
                     <!-- Form Tolak -->
                     @if($app->status !== 'ditolak')
                         <form action="{{ route('penyedia.applicants.status', $app) }}" method="POST" style="margin: 0;"
-                              onsubmit="return confirm('Apakah Anda yakin ingin MENOLAK pelamar ini?');">
+                              data-confirm="Apakah Anda yakin ingin <strong>MENOLAK</strong> lamaran dari <strong>{{ $app->user->name ?? 'pelamar ini' }}</strong>?"
+                              data-confirm-title="Tolak Lamaran?"
+                              data-confirm-type="danger"
+                              data-confirm-btn="Ya, Tolak Lamaran">
                             @csrf
                             @method('PATCH')
                             <input type="hidden" name="status" value="ditolak">

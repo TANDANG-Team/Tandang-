@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/tandang-dialog.css') }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
@@ -69,7 +70,11 @@
                     <strong>{{ Auth::user()->name ?? 'Administrator' }}</strong>
                     <small>{{ Auth::user()->email ?? 'admin@tandang.id' }}</small>
                 </div>
-                <form action="{{ route('logout') }}" method="POST" style="margin-left: auto;">
+                <form action="{{ route('logout') }}" method="POST" style="margin-left: auto;"
+                      data-confirm="Apakah Anda yakin ingin keluar dari sesi Administrator?"
+                      data-confirm-title="Keluar dari Admin Panel?"
+                      data-confirm-type="danger"
+                      data-confirm-btn="Ya, Keluar">
                     @csrf
                     <button type="submit" title="Keluar / Logout" style="border: 0; background: transparent; color: #94a3b8; cursor: pointer; display: flex; align-items: center; padding: 6px; border-radius: 6px; transition: all 0.15s ease;" onmouseover="this.style.color='#ef4444'; this.style.background='#fee2e2';" onmouseout="this.style.color='#94a3b8'; this.style.background='transparent';">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -492,6 +497,7 @@
             }
         });
     </script>
+    <script src="{{ asset('js/tandang-dialog.js') }}"></script>
 </body>
 </html>
 

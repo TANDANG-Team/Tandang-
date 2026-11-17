@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/tandang-dialog.css') }}">
 
     <style>
         :root {
@@ -572,9 +573,13 @@
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         <span>Profil</span>
                     </a>
-                    <form action="{{ route('logout') }}" method="POST">
+                    <form action="{{ route('logout') }}" method="POST"
+                          data-confirm="Apakah Anda yakin ingin keluar dari sesi akun penyedia saat ini?"
+                          data-confirm-title="Keluar dari Akun?"
+                          data-confirm-type="danger"
+                          data-confirm-btn="Ya, Keluar Akun">
                         @csrf
-                        <button type="submit" class="btn-logout" onclick="return confirm('Yakin ingin keluar dari akun?')">
+                        <button type="submit" class="btn-logout">
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                             <span>Keluar</span>
                         </button>
@@ -610,6 +615,7 @@
         </main>
     </div>
 
+    <script src="{{ asset('js/tandang-dialog.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

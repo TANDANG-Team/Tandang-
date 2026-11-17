@@ -139,7 +139,11 @@
                                     @endif
 
                                     <!-- Delete Button -->
-                                    <form action="{{ route('penyedia.projects.destroy', $project) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus proyek ini?');">
+                                    <form action="{{ route('penyedia.projects.destroy', $project) }}" method="POST" style="margin: 0;"
+                                          data-confirm="Apakah Anda yakin ingin menghapus proyek <strong>{{ $project->title }}</strong>?<br><br><span style='font-size:12px;color:#dc2626;'>Peringatan: Seluruh data lamaran terkait juga akan terhapus dan tidak dapat dipulihkan.</span>"
+                                          data-confirm-title="Hapus Proyek Ini?"
+                                          data-confirm-type="danger"
+                                          data-confirm-btn="Ya, Hapus Proyek">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" style="background: none; border: none; color: #9ca3af; cursor: pointer; padding: 6px;" title="Hapus proyek">

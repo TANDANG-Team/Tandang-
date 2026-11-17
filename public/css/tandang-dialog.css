@@ -1,0 +1,191 @@
+/* ==========================================================================
+   TANDANG MODERN DIALOG SYSTEM (Modal Popup Alert & Confirm)
+   ========================================================================== */
+
+.tandang-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: none;
+    place-items: center;
+    padding: 16px;
+    opacity: 0;
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tandang-dialog-backdrop.show {
+    display: grid;
+    opacity: 1;
+}
+
+.tandang-dialog-box {
+    background: #ffffff;
+    border-radius: 20px;
+    max-width: 440px;
+    width: 100%;
+    padding: 32px 28px 24px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 25px 35px -10px rgba(15, 23, 42, 0.2), 0 10px 15px -5px rgba(15, 23, 42, 0.08);
+    transform: scale(0.94) translateY(12px);
+    opacity: 0;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+.tandang-dialog-backdrop.show .tandang-dialog-box {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+.tandang-dialog-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+    transition: all 0.2s ease;
+}
+
+.tandang-dialog-icon svg {
+    width: 30px;
+    height: 30px;
+    stroke-width: 2.2;
+}
+
+/* Icon Variations */
+.tandang-dialog-icon.danger {
+    background: #fee2e2;
+    color: #ef4444;
+    border: 6px solid #fef2f2;
+}
+
+.tandang-dialog-icon.success {
+    background: #e7f7f4;
+    color: #0fa48f;
+    border: 6px solid #f0fdfa;
+}
+
+.tandang-dialog-icon.warning {
+    background: #fef3c7;
+    color: #f59e0b;
+    border: 6px solid #fffbeb;
+}
+
+.tandang-dialog-icon.info {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 6px solid #f0f9ff;
+}
+
+.tandang-dialog-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: #182238;
+    margin-bottom: 8px;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+}
+
+.tandang-dialog-message {
+    font-size: 13.5px;
+    color: #64748b;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    word-break: break-word;
+}
+
+.tandang-dialog-message strong {
+    color: #182238;
+    font-weight: 700;
+}
+
+.tandang-dialog-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    text-align: left;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.45;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    margin-bottom: 20px;
+}
+
+.tandang-dialog-notice svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    color: #64748b;
+}
+
+.tandang-dialog-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.tandang-dialog-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 42px;
+    padding: 0 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.tandang-dialog-btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.tandang-dialog-btn-secondary:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.tandang-dialog-btn-danger {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.tandang-dialog-btn-danger:hover {
+    background: #dc2626;
+}
+
+.tandang-dialog-btn-success {
+    background: #0fa48f;
+    color: #ffffff;
+}
+
+.tandang-dialog-btn-success:hover {
+    background: #0c7566;
+}
+
+.tandang-dialog-btn-primary {
+    background: #182238;
+    color: #ffffff;
+}
+
+.tandang-dialog-btn-primary:hover {
+    background: #0f172a;
+}
+
