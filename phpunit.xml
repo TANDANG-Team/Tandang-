@@ -33,6 +33,6 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <!-- Test tidak bergantung pada QRIS di .env lokal; test yang butuh QRIS mengaturnya sendiri. -->
-        <env name="QRIS_MERCHANT_NAME" value=""/>
+        <env name="QRIS_IMAGE" value="images/payment/__qris-tidak-ada__.png"/>
     </php>
 </phpunit>

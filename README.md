@@ -105,7 +105,7 @@ Kalau halaman Promosi Proyek menampilkan "Paket promosi belum tersedia" (databas
 4. Talenta mengisi **Asesmen Gaya Kerja** (opsional, untuk skor kecocokan) → **Cari Proyek** → lamar. Kuota pelamar maksimal 2 × jumlah talenta dibutuhkan; lamaran bisa dibatalkan maks. 3 kali per 7 hari.
 5. Penyedia membuka **Pelamar** → terima/tolak. Lamaran yang diterima membuat catatan pengerjaan.
 6. Saat pekerjaan selesai, salah satu pihak **mengajukan selesai** dan pihak lain **mengonfirmasi** (menu Penilaian Talenta / Riwayat & Penilaian). Setelah itu keduanya bisa saling memberi **rating** dalam 7 hari.
-7. **Sponsored Project** hanya bisa dibeli Penyedia dengan rating minimal 4,0 dari minimal 3 penilaian Talenta. Di halaman pembayaran ada timer 5 menit; tombol **Simulasikan Pembayaran Berhasil** (hanya di luar production) mengaktifkan promosi 4 × 24 jam tanpa dihitung sebagai pendapatan. Pembayaran QRIS nyata butuh `QRIS_MERCHANT_NAME` di `.env` dan gambar `public/images/payment/qris-sponsor.png`.
+7. **Sponsored Project** hanya bisa dibeli Penyedia dengan rating minimal 4,0 dari minimal 3 penilaian Talenta. Di halaman pembayaran ada timer 5 menit; tombol **Simulasikan Pembayaran Berhasil** (hanya di luar production) mengaktifkan promosi 4 × 24 jam tanpa dihitung sebagai pendapatan. QRIS tim (`public/images/payment/qris-sponsor.png`) dan nama merchant-nya sudah terpasang bawaan, jadi tidak perlu diatur di `.env`. Pembayaran sungguhan lewat QR ini masuk ke rekening merchant tersebut, jadi untuk uji coba pakai tombol simulasi.
 
 ---
 

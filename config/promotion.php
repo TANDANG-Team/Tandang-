@@ -22,8 +22,10 @@ return [
     */
     'qris' => [
         'image'         => env('QRIS_IMAGE', 'images/payment/qris-sponsor.png'), // relatif ke public/
-        'merchant_name' => env('QRIS_MERCHANT_NAME'),
-        'merchant_nmid' => env('QRIS_MERCHANT_NMID'),
+        // Bawaan = QRIS milik tim (gambarnya ikut di repo), jadi tidak perlu diisi lagi di .env.
+        // Isi QRIS_MERCHANT_NAME / QRIS_MERCHANT_NMID di .env hanya bila memakai QRIS lain.
+        'merchant_name' => env('QRIS_MERCHANT_NAME') ?: 'AMRUL HIDAYAT, CANDI',
+        'merchant_nmid' => env('QRIS_MERCHANT_NMID') ?: 'ID1026535586410',
     ],
 
     /*
