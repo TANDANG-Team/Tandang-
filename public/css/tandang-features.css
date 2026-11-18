@@ -68,6 +68,35 @@
     .sponsored-feature__title { font-size:18px; }
 }
 
+/* ---------- Carousel Featured Sponsored (maks. 5 kartu, satu per slide) ---------- */
+.sponsored-carousel { position:relative; width:100%; min-width:0; margin:0 0 24px; }
+.sponsored-carousel__viewport {
+    display:flex; align-items:stretch; overflow-x:auto; overflow-y:hidden;
+    scroll-snap-type:x mandatory; overscroll-behavior-x:contain;
+    scrollbar-width:none; -ms-overflow-style:none;
+    padding:2px 0 14px; margin-bottom:-8px; /* ruang agar bayangan kartu tidak terpotong */
+}
+.sponsored-carousel__viewport::-webkit-scrollbar { display:none; }
+.sponsored-carousel__slide { flex:0 0 100%; min-width:0; scroll-snap-align:start; scroll-snap-stop:always; display:flex; }
+.sponsored-carousel .sponsored-feature { margin:0; flex:1; }
+.sponsored-carousel__controls { display:flex; align-items:center; justify-content:center; gap:12px; margin-top:4px; }
+.sponsored-carousel__nav {
+    width:32px; height:32px; border-radius:999px; border:1px solid #b9e6de; background:#fff; color:var(--tdg-teal-dark);
+    display:grid; place-items:center; cursor:pointer; transition:background .15s, border-color .15s;
+}
+.sponsored-carousel__nav:hover { background:var(--tdg-teal-50); border-color:var(--tdg-teal); }
+.sponsored-carousel__nav:focus-visible, .sponsored-carousel__dot:focus-visible { outline:2px solid var(--tdg-teal); outline-offset:2px; }
+.sponsored-carousel__nav svg { width:16px; height:16px; }
+.sponsored-carousel__dots { display:flex; align-items:center; gap:6px; }
+.sponsored-carousel__dot {
+    width:8px; height:8px; padding:0; border:0; border-radius:999px; background:#cbd5e1; cursor:pointer;
+    transition:width .25s ease, background .25s ease;
+}
+.sponsored-carousel__dot.is-active { width:22px; background:var(--tdg-teal); }
+@media (prefers-reduced-motion: reduce) {
+    .sponsored-carousel__dot { transition:none; }
+}
+
 /* ---------- Bintang ---------- */
 .tdg-stars { display:inline-flex; gap:1px; vertical-align:middle; }
 .tdg-stars svg { width:15px; height:15px; }

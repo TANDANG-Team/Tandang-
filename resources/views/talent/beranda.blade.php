@@ -129,13 +129,8 @@
     <a href="{{ route('talent.rekomendasi') }}" class="btn btn-secondary btn-sm">Lihat Semua Rekomendasi</a>
 </div>
 
-{{-- Featured Sponsored Project (berbayar): satu kartu lebar penuh, dirotasi acak dari promosi aktif. --}}
-@if($featuredProject)
-    @include('partials.sponsored-feature', [
-        'project'     => $featuredProject,
-        'applyStatus' => $applyStatuses[$featuredProject->id] ?? null,
-    ])
-@endif
+{{-- Featured Sponsored Project (berbayar): carousel lebar penuh, maks. 5 proyek, urutan diacak dari promosi aktif. --}}
+@include('partials.sponsored-carousel', ['projects' => $featuredProjects, 'applyStatuses' => $applyStatuses])
 
 @if($topRecommendations->count() > 0)
     <div class="project-grid">
@@ -143,7 +138,7 @@
             @include('talent.partials.project-card', ['applyStatus' => $applyStatuses[$p->id] ?? null])
         @endforeach
     </div>
-@elseif(! $featuredProject)
+@elseif($featuredProjects->isEmpty())
     <div style="background: #fff; padding: 40px; border-radius: 12px; text-align: center; border: 1px dashed var(--line); margin-bottom: 32px;">
         <p style="color: var(--muted);">Belum ada proyek yang dipublikasikan saat ini.</p>
     </div>

@@ -488,7 +488,7 @@ class SponsoredProjectTest extends TestCase
             ->assertSee('data-promo-id="' . $promo->id . '"', false)
             ->assertSee($regular->title);
 
-        $this->assertSame($this->project->id, $response->viewData('featuredProject')->id);
+        $this->assertSame([$this->project->id], $response->viewData('featuredProjects')->pluck('id')->all());
         // Proyek yang sama tidak muncul dua kali (dikeluarkan dari grid).
         $this->assertFalse($response->viewData('projects')->contains('id', $this->project->id));
         $this->assertTrue($response->viewData('projects')->contains('id', $regular->id));
@@ -508,10 +508,54 @@ class SponsoredProjectTest extends TestCase
                 ->assertSee('/talent/promosi', false)       // skrip tracking impression & klik
                 ->assertSee($regular->title);
 
-            $this->assertSame($this->project->id, $response->viewData('featuredProject')->id, $route);
+            $this->assertSame([$this->project->id], $response->viewData('featuredProjects')->pluck('id')->all(), $route);
             $list = $route === 'talent.beranda' ? 'topRecommendations' : 'projects';
             $this->assertFalse($response->viewData($list)->contains('id', $this->project->id), "{$route}: tidak tampil dua kali");
         }
+    }
+
+    public function test_single_featured_project_has_no_carousel_controls(): void
+    {
+        $this->activate();
+
+        $this->actingAs($this->talenta)->get(route('talent.cari'))->assertOk()
+            ->assertSee('sponsored-carousel', false)
+            ->assertDontSee('sponsored-carousel__dot', false);
+    }
+
+    public function test_featured_carousel_shows_at_most_five_promoted_projects(): void
+    {
+        config(['promotion.banner_max' => 5]);
+
+        $promotedIds = collect([$this->project->id]);
+        $this->activate();
+        foreach (range(1, 5) as $i) {
+            $project = Project::factory()->create(['user_id' => $this->penyedia->id, 'title' => "Proyek Promosi {$i}"]);
+            $this->activate($project);
+            $promotedIds->push($project->id);
+        }
+
+        foreach (['talent.beranda', 'talent.rekomendasi', 'talent.cari'] as $route) {
+            $response = $this->actingAs($this->talenta)->get(route($route))->assertOk();
+
+            $featured = $response->viewData('featuredProjects');
+            $this->assertCount(5, $featured, $route);
+            $this->assertCount(5, $featured->pluck('id')->unique(), "{$route}: tidak ada kartu ganda di carousel");
+            $this->assertEmpty($featured->pluck('id')->diff($promotedIds), "{$route}: hanya proyek yang dipromosikan");
+            $this->assertTrue($featured->every(fn ($p) => $p->promotion_id !== null), $route);
+
+            $response->assertSee('sponsored-carousel is-multi', false)
+                ->assertSee('sponsored-carousel__dot', false)
+                ->assertSee('Proyek promosi berikutnya');
+            $this->assertSame(5, substr_count($response->getContent(), 'data-placement="banner"'), $route);
+        }
+
+        // Promosi ke-6 tidak hilang: tetap tampil di daftar reguler dengan label promosi.
+        $response = $this->actingAs($this->talenta)->get(route('talent.cari'))->assertOk();
+        $leftover = $promotedIds->diff($response->viewData('featuredProjects')->pluck('id'));
+        $this->assertCount(1, $leftover);
+        $this->assertTrue($response->viewData('projects')->contains('id', $leftover->first()));
+        $this->assertNotNull($response->viewData('projects')->firstWhere('id', $leftover->first())->promotion_id);
     }
 
     public function test_no_featured_card_on_beranda_without_live_promotion(): void
@@ -519,7 +563,7 @@ class SponsoredProjectTest extends TestCase
         Project::factory()->create(['title' => 'Proyek Reguler Tanpa Promosi']);
 
         $response = $this->actingAs($this->talenta)->get(route('talent.beranda'))->assertOk();
-        $this->assertNull($response->viewData('featuredProject'));
+        $this->assertTrue($response->viewData('featuredProjects')->isEmpty());
         $response->assertDontSee('sponsored-feature"', false);
     }
 
@@ -542,7 +586,7 @@ class SponsoredProjectTest extends TestCase
         Project::factory()->create(['title' => 'Fotografer Event', 'category' => 'Fotografi & Videografi']);
 
         $response = $this->actingAs($this->talenta)->get(route('talent.cari', ['q' => 'Fotografer']))->assertOk();
-        $this->assertNull($response->viewData('featuredProject'));
+        $this->assertTrue($response->viewData('featuredProjects')->isEmpty());
         $response->assertDontSee('sponsored-feature"', false);
     }
 

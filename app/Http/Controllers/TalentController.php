@@ -56,8 +56,8 @@ class TalentController extends Controller
             return $project;
         });
 
-        // Proyek promosi tampil sebagai kartu Featured di atas rekomendasi (tidak diulang di grid).
-        [$projects, $featuredProject] = $this->decorateListing($projects);
+        // Proyek promosi tampil sebagai carousel Featured di atas rekomendasi (tidak diulang di grid).
+        [$projects, $featuredProjects] = $this->decorateListing($projects);
 
         $topRecommendations = !empty($talent->assessment_answers)
             ? $projects->sortByDesc('match_score')->take(6)->values()
@@ -77,9 +77,9 @@ class TalentController extends Controller
             'talent'             => $talent,
             'topRecommendations' => $topRecommendations,
             'recentApplications' => $recentApplications,
-            'applyStatuses'      => $this->applyService->getApplyStatuses($featuredProject ? $topRecommendations->concat([$featuredProject]) : $topRecommendations, $user),
+            'applyStatuses'      => $this->applyService->getApplyStatuses($topRecommendations->concat($featuredProjects), $user),
             'totalApplied'       => $totalApplied,
-            'featuredProject'    => $featuredProject,
+            'featuredProjects'   => $featuredProjects,
             'pageToken'          => Str::random(24),
         ]);
     }
@@ -106,14 +106,14 @@ class TalentController extends Controller
             $projects = $projects->sortByDesc('match_score')->values();
         }
 
-        [$projects, $featuredProject] = $this->decorateListing($projects);
+        [$projects, $featuredProjects] = $this->decorateListing($projects);
 
         return view('talent.rekomendasi', [
             'user' => $user,
             'talent' => $talent,
             'projects' => $projects,
-            'applyStatuses' => $this->applyService->getApplyStatuses($featuredProject ? $projects->concat([$featuredProject]) : $projects, $user),
-            'featuredProject' => $featuredProject,
+            'applyStatuses' => $this->applyService->getApplyStatuses($projects->concat($featuredProjects), $user),
+            'featuredProjects' => $featuredProjects,
             'pageToken' => Str::random(24),
         ]);
     }
@@ -165,16 +165,16 @@ class TalentController extends Controller
         }
 
         // Promosi hanya untuk proyek yang SUDAH lolos filter/pencarian → tetap relevan.
-        [$projects, $featuredProject] = $this->decorateListing($projects);
+        [$projects, $featuredProjects] = $this->decorateListing($projects);
 
         return view('talent.cari', [
             'user'              => $user,
             'talent'            => $talent,
             'projects'          => $projects,
             'categories'        => $categories,
-            'applyStatuses'     => $this->applyService->getApplyStatuses($featuredProject ? $projects->concat([$featuredProject]) : $projects, $user),
+            'applyStatuses'     => $this->applyService->getApplyStatuses($projects->concat($featuredProjects), $user),
             'filters'           => $request->only(['q', 'category', 'work_type', 'location']),
-            'featuredProject'   => $featuredProject,
+            'featuredProjects'  => $featuredProjects,
             'pageToken'         => Str::random(24),
         ]);
     }
@@ -623,12 +623,13 @@ class TalentController extends Controller
     /**
      * Lengkapi daftar proyek Talenta (beranda, rekomendasi, cari) dengan:
      *  - promotion_id untuk proyek yang sedang dipromosikan,
-     *  - satu Featured Sponsored Project (dipilih acak dari promosi aktif di daftar ini → rotasi adil),
-     *    dikeluarkan dari daftar agar kartu yang sama tidak tampil dua kali,
+     *  - hingga N Featured Sponsored Project (config promotion.banner_max, default 5) untuk carousel,
+     *    urutannya diacak tiap muat halaman → rotasi adil; bila promosi aktif > N, dipilih acak.
+     *    Proyek featured dikeluarkan dari daftar agar kartu yang sama tidak tampil dua kali,
      *  - rating Penyedia (provider_rating / provider_rating_count) dari satu query agregat.
      * Urutan daftar reguler tidak diubah; promosi hanya menambah visibilitas.
      *
-     * @return array{0: \Illuminate\Support\Collection, 1: ?Project}
+     * @return array{0: \Illuminate\Support\Collection, 1: \Illuminate\Support\Collection<int, Project>}
      */
     protected function decorateListing($projects): array
     {
@@ -637,16 +638,20 @@ class TalentController extends Controller
             ->get(['id', 'project_id', 'start_at', 'end_at'])
             ->keyBy('project_id');
 
-        $featuredPromotion = $livePromotions->isNotEmpty() ? $livePromotions->random() : null;
-        $featuredProject = $featuredPromotion ? $projects->firstWhere('id', $featuredPromotion->project_id) : null;
+        $bannerMax = max(1, (int) config('promotion.banner_max', 5));
+        $featuredIds = $livePromotions->keys()->shuffle()->take($bannerMax);
+        $featuredProjects = $featuredIds
+            ->map(fn ($id) => $projects->firstWhere('id', $id))
+            ->filter()
+            ->values();
 
-        if ($featuredProject) {
-            $projects = $projects->reject(fn ($p) => $p->id === $featuredProject->id)->values();
+        if ($featuredProjects->isNotEmpty()) {
+            $projects = $projects->reject(fn ($p) => $featuredIds->contains($p->id))->values();
         }
 
         // Sumber sama dengan profil & syarat promosi: hanya rating valid dari Talenta.
         $providerRatings = app(\App\Services\Rating\RatingService::class)->averagesFor(
-            $projects->pluck('user_id')->push($featuredProject?->user_id)->filter()->unique()->values(),
+            $projects->pluck('user_id')->concat($featuredProjects->pluck('user_id'))->filter()->unique()->values(),
             \App\Models\Rating::ROLE_PENYEDIA
         );
 
@@ -658,11 +663,9 @@ class TalentController extends Controller
             return $project;
         };
         $projects->transform($decorate);
-        if ($featuredProject) {
-            $decorate($featuredProject);
-        }
+        $featuredProjects->each($decorate);
 
-        return [$projects, $featuredProject];
+        return [$projects, $featuredProjects];
     }
 
     protected function getOrCreateTalentProfile($user): TalentProfile

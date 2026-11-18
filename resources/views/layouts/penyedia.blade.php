@@ -462,7 +462,7 @@
             color: #4b5563;
         }
     </style>
-    <link rel="stylesheet" href="{{ asset('css/tandang-features.css') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('css/tandang-features.css') }}?v=3">
     @stack('styles')
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">

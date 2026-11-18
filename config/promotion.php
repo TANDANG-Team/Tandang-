@@ -40,6 +40,9 @@ return [
     // Atribusi lamaran: berlaku jika lamaran dikirim maksimal N jam setelah klik promosi.
     'attribution_hours' => 24,
 
+    // Jumlah maksimal proyek promosi yang tampil bergantian di carousel banner (beranda, rekomendasi, cari).
+    'banner_max' => (int) env('PROMOTION_BANNER_MAX', 5),
+
     // Impression dianggap sah bila ≥50% kartu terlihat selama ≥1 detik (diukur di browser).
     'impression_visible_ratio' => 0.5,
     'impression_min_ms' => 1000,

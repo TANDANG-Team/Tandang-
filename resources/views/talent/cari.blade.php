@@ -35,18 +35,13 @@
     <a href="{{ route('talent.cari') }}" class="btn btn-secondary btn-sm">Reset</a>
 </form>
 
-@php $total = $projects->count() + ($featuredProject ? 1 : 0); @endphp
+@php $total = $projects->count() + $featuredProjects->count(); @endphp
 <div style="margin-bottom: 18px; font-size: 13.5px; color: var(--muted);">
     Ditemukan <strong>{{ $total }}</strong> proyek aktif.
 </div>
 
-{{-- Featured Sponsored Project: satu kartu lebar penuh di atas hasil, hanya bila relevan dengan filter. --}}
-@if($featuredProject)
-    @include('partials.sponsored-feature', [
-        'project'   => $featuredProject,
-        'applyStatus' => $applyStatuses[$featuredProject->id] ?? null,
-    ])
-@endif
+{{-- Featured Sponsored Project: carousel lebar penuh (maks. 5) di atas hasil, hanya proyek yang relevan dengan filter. --}}
+@include('partials.sponsored-carousel', ['projects' => $featuredProjects, 'applyStatuses' => $applyStatuses])
 
 @if($projects->count() > 0)
     <div class="project-grid">
@@ -54,7 +49,7 @@
             @include('talent.partials.project-card', ['applyStatus' => $applyStatuses[$p->id] ?? null])
         @endforeach
     </div>
-@elseif(! $featuredProject)
+@elseif($featuredProjects->isEmpty())
     <div style="background: #fff; padding: 40px; border-radius: 12px; text-align: center; border: 1px dashed var(--line);">
         <p style="color: var(--muted);">Tidak ada proyek yang sesuai dengan kriteria pencarian Anda.</p>
     </div>

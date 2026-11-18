@@ -20,13 +20,8 @@
     </div>
 @endif
 
-{{-- Featured Sponsored Project (berbayar): satu kartu lebar penuh, dirotasi acak dari promosi aktif. --}}
-@if($featuredProject)
-    @include('partials.sponsored-feature', [
-        'project'     => $featuredProject,
-        'applyStatus' => $applyStatuses[$featuredProject->id] ?? null,
-    ])
-@endif
+{{-- Featured Sponsored Project (berbayar): carousel lebar penuh, maks. 5 proyek, urutan diacak dari promosi aktif. --}}
+@include('partials.sponsored-carousel', ['projects' => $featuredProjects, 'applyStatuses' => $applyStatuses])
 
 @if($projects->count() > 0)
     <div class="project-grid">
@@ -34,7 +29,7 @@
             @include('talent.partials.project-card', ['applyStatus' => $applyStatuses[$p->id] ?? null, 'showBreakdown' => true])
         @endforeach
     </div>
-@elseif(! $featuredProject)
+@elseif($featuredProjects->isEmpty())
     <div style="background: #fff; padding: 40px; border-radius: 12px; text-align: center; border: 1px dashed var(--line);">
         <p style="color: var(--muted);">Tidak ada proyek yang sesuai dengan kriteria saat ini.</p>
     </div>

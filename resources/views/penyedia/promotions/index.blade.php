@@ -24,7 +24,7 @@
                 Sponsored Project
             </span>
             <h2>Tampil paling atas saat Talenta mencari proyek yang relevan</h2>
-            <p>Satu kartu Featured di atas hasil pencarian, label "Dipromosikan", dan dashboard statistik (impressions, klik, CTR, lamaran). Promosi membantu visibilitas, <strong style="color:#fff;">bukan jaminan</strong> jumlah pelamar.</p>
+            <p>Kartu Featured di carousel atas hasil pencarian (tampil bergantian, maks. 5 proyek), label "Dipromosikan", dan dashboard statistik (impressions, klik, CTR, lamaran). Promosi membantu visibilitas, <strong style="color:#fff;">bukan jaminan</strong> jumlah pelamar.</p>
         </div>
         @if($package)
             <div class="pr-hero-price">
