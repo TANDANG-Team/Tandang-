@@ -197,6 +197,31 @@ class ProjectApplicationCancelTest extends TestCase
             ->assertSee('Dibatalkan oleh talenta');
     }
 
+    public function test_rejected_application_is_final_and_hides_accept_button(): void
+    {
+        $provider = $this->makeProvider();
+        $project = $this->makeProject($provider, 2);
+        $talent = $this->makeTalent();
+        $this->apply($talent, $project)->assertCreated();
+        $application = $this->applicationOf($project, $talent);
+
+        $this->actingAs($provider)->patch("/penyedia/pelamar/{$application->id}/status", ['status' => 'ditolak'])
+            ->assertSessionHas('info');
+        $this->assertSame('ditolak', $application->fresh()->status);
+
+        foreach (['diterima', 'dalam_review'] as $status) {
+            $this->actingAs($provider)->patch("/penyedia/pelamar/{$application->id}/status", ['status' => $status])
+                ->assertSessionHas('error', fn ($msg) => str_contains($msg, 'sudah ditolak'));
+            $this->assertSame('ditolak', $application->fresh()->status);
+        }
+
+        $this->actingAs($provider)->get('/penyedia/pelamar?status=ditolak')
+            ->assertOk()
+            ->assertSee('Lamaran ditolak')
+            ->assertDontSee('Ya, Terima Pelamar')   // tombol Terima tidak dirender
+            ->assertDontSee('Ya, Tolak Lamaran');
+    }
+
     public function test_lamaran_page_shows_cancel_button_and_remaining_quota(): void
     {
         $provider = $this->makeProvider();

@@ -108,6 +108,11 @@ class ApplicantController extends Controller
                 return 'cancelled';
             }
 
+            // Penolakan bersifat final: lamaran yang sudah ditolak tidak bisa diterima / di-review ulang.
+            if ($application->status === ProjectApplication::STATUS_DITOLAK) {
+                return 'rejected';
+            }
+
             // Business rule: Enforce quota when accepting
             if ($validated['status'] === ProjectApplication::STATUS_DITERIMA) {
                 $acceptedCount = $project->acceptedApplications()->where('id', '!=', $application->id)->count();
@@ -130,6 +135,11 @@ class ApplicantController extends Controller
         if ($result === 'cancelled') {
             return redirect()->back()
                 ->with('error', "Gagal memproses: {$applicantName} sudah membatalkan lamarannya untuk proyek \"{$project->title}\".");
+        }
+
+        if ($result === 'rejected') {
+            return redirect()->back()
+                ->with('error', "Gagal memproses: lamaran {$applicantName} untuk proyek \"{$project->title}\" sudah ditolak dan tidak dapat diubah lagi.");
         }
 
         if ($result === 'quota_filled') {

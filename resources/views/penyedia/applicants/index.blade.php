@@ -160,10 +160,14 @@
                         <span style="font-size: 12.5px; color: #6b7280; font-style: italic;">
                             Dibatalkan oleh talenta{{ $app->cancelled_at ? ' pada ' . $app->cancelled_at->format('d M Y') : '' }}
                         </span>
+                    @elseif($app->status === 'ditolak')
+                        <span style="font-size: 12.5px; color: #6b7280; font-style: italic;">
+                            Lamaran ditolak{{ $app->reviewed_at ? ' pada ' . $app->reviewed_at->format('d M Y') : '' }}
+                        </span>
                     @endif
 
-                    <!-- Form Terima -->
-                    @if(! in_array($app->status, ['diterima', 'dibatalkan'], true))
+                    <!-- Form Terima (lamaran yang sudah ditolak bersifat final, tidak bisa diterima lagi) -->
+                    @if(! in_array($app->status, ['diterima', 'ditolak', 'dibatalkan'], true))
                         <form action="{{ route('penyedia.applicants.status', $app) }}" method="POST" style="margin: 0;"
                               data-confirm="Apakah Anda yakin ingin <strong>MENERIMA</strong> pelamar <strong>{{ e($app->user->name ?? 'ini') }}</strong> untuk proyek <strong>{{ e($app->project->title) }}</strong>?"
                               data-confirm-title="Terima Pelamar Proyek?"
