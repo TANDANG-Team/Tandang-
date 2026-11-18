@@ -35,6 +35,11 @@ if (loginForm && message) {
             const data = await response.json();
 
             if (!response.ok) {
+                if (data.reason === 'account_inactive' && data.support_email) {
+                    showInactiveMessage(data.support_email, email);
+                    if (submitBtn) submitBtn.disabled = false;
+                    return;
+                }
                 throw new Error(data.message || 'Email atau kata sandi tidak sesuai.');
             }
 
@@ -50,6 +55,28 @@ if (loginForm && message) {
             if (submitBtn) submitBtn.disabled = false;
         }
     });
+}
+
+// Akun dinonaktifkan Admin: tampilkan email bantuan yang bisa diklik (mailto dengan subjek & email akun terisi).
+// Dibangun lewat DOM (bukan innerHTML) agar nilai dari server/input tidak dieksekusi sebagai HTML.
+function showInactiveMessage(supportEmail, accountEmail) {
+    const subject = 'Pengajuan Aktivasi Kembali Akun TANDANG';
+    const body = 'Halo Tim TANDANG,\n\nAkun saya dengan email ' + (accountEmail || '-') +
+        ' dinonaktifkan. Mohon informasi lebih lanjut / pengajuan aktivasi kembali.\n\nTerima kasih.';
+
+    const link = document.createElement('a');
+    link.href = 'mailto:' + supportEmail + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    link.textContent = supportEmail;
+    link.style.color = '#0f766e';
+    link.style.fontWeight = '700';
+    link.style.textDecoration = 'underline';
+
+    message.style.color = '#dc2626';
+    message.replaceChildren(
+        document.createTextNode('Akun Anda dinonaktifkan oleh Administrator. Untuk informasi lebih lanjut atau pengajuan aktivasi kembali, hubungi kami di '),
+        link,
+        document.createTextNode('.')
+    );
 }
 
 if (forgotLink) {

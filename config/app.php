@@ -55,6 +55,12 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | Email bantuan resmi TANDANG. Ditampilkan ke pengguna yang perlu menghubungi tim,
+    | misalnya saat akun dinonaktifkan oleh Administrator.
+    */
+    'support_email' => env('SUPPORT_EMAIL', 'tandang@gmail.com'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

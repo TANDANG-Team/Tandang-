@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{ asset('css/password-toggle.css') }}">
     <script src="{{ asset('js/password-toggle.js') }}" defer></script>
     <script src="{{ asset('js/tandang-dialog.js') }}" defer></script>
-    <script src="{{ asset('js/login.js') }}" defer></script>
+    <script src="{{ asset('js/login.js') }}?v=2" defer></script>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">

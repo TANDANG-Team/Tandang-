@@ -92,8 +92,11 @@ Route::post('/web-login', function (Request $request) {
     // Check if user is inactive
     if (isset($user->is_active) && ! $user->is_active) {
         Auth::logout();
+        $supportEmail = config('app.support_email');
         return response()->json([
-            'message' => 'Akun Anda dinonaktifkan oleh Administrator. Hubungi bantuan.',
+            'message' => "Akun Anda dinonaktifkan oleh Administrator. Untuk informasi lebih lanjut atau pengajuan aktivasi kembali, hubungi kami di {$supportEmail}.",
+            'reason' => 'account_inactive',
+            'support_email' => $supportEmail,
         ], 403);
     }
 
